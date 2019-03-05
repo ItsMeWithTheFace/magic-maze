@@ -14,6 +14,7 @@ tile.add({
   claimed: { type: Boolean }, // Item tiles
   used: { type: Boolean }, // Time tiles
   escaped: { type: Boolean }, // Exit tiles
+  searched: { type: Boolean }, // Search tiles
 });
 
 module.exports = {
