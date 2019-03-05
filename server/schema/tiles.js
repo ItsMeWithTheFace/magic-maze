@@ -7,6 +7,12 @@ module.exports = gql`
     neighbours: [Tile]
   }
 
+  type Normal implements Tile {
+    _id: ID!
+    coordinates: Coordinates
+    neighbours: [Tile]
+  }
+
   type Entry implements Tile {
     _id: ID!
     coordinates: Coordinates
@@ -37,7 +43,7 @@ module.exports = gql`
     coordinates: Coordinates
     neighbours: [Tile]
     colour: String!
-    used: Boolean!
+    searched: Boolean!
   }
 
   type Item implements Tile {
