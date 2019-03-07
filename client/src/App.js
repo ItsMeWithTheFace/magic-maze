@@ -14,9 +14,7 @@ class App extends Component {
         <div className="row">
           <div className="col" style={{textAlign: 'center'}}>
             <button className="btn btn-primary btn-lg" type="button">Find a Lobby</button>
-          </div>
-          <div className="col" style={{textAlign: 'center'}}>
-            <button className="btn btn-success btn-lg" type="button">Play Singleplayer</button>
+            <button className="btn btn-success btn-lg ml-4" type="button">Play Singleplayer</button>
           </div>
         </div>
       </div>
