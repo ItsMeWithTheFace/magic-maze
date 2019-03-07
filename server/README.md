@@ -19,7 +19,7 @@ Perform the following steps if you want to work on this project locally
    ```bash
    npm install
    ```
-3. Copy the `.env.example` file into a `.env` file and fill in the environment variables with your own
+3. Copy `.env.example` into a new `.env` file and fill in the environment variables with your own
    ```bash
    mv .env.example .env
    ```
