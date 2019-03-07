@@ -1,4 +1,39 @@
-.App {
+body {
+  background-image: linear-gradient(-45deg, #334D5C , #45B29D, #E27A3F, #DF5A49);
+  background-size: 400% 400%;
+  color: #FFFFFF !important;
+  animation: gradient 15s ease infinite !important;
+}
+
+header {
+  text-align: center;
+  margin-top: 3em;
+  letter-spacing: 2em;
+  font-weight: normal;
+}
+
+.card {
+  background-color: #45B29D !important;
+}
+
+.logo {
+  font-size: 100px;
+  margin: 50px 0 50px 0;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* .App {
   text-align: center;
 }
 
@@ -30,4 +65,4 @@
   to {
     transform: rotate(360deg);
   }
-}
+} */

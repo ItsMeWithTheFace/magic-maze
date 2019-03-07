@@ -1,25 +1,24 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 class App extends Component {
   render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
+      <div className="container" style={{marginTop: '12%'}}>
+        <header>
+          <h1>MAGIC MAZE</h1>
+          <div className="logo">
+            🏹⚔️🎩🔫
+          </div>
         </header>
+        <div className="row">
+          <div className="col" style={{textAlign: 'center'}}>
+            <button className="btn btn-primary btn-lg" type="button">Find a Lobby</button>
+          </div>
+          <div className="col" style={{textAlign: 'center'}}>
+            <button className="btn btn-success btn-lg" type="button">Play Singleplayer</button>
+          </div>
+        </div>
       </div>
     );
   }
