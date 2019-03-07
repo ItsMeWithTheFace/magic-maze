@@ -34,5 +34,5 @@ server.installSubscriptionHandlers(ws);
 ws.listen(PORT, () => {
   logger.info(`🚀 Server ready at port ${PORT} in ${server.graphqlPath}`);
   logger.info(`🚀 Subscriptions ready at port ${PORT} in ${server.subscriptionsPath}`);
-  logger.info('Healthcheck in /.well-known/apollo/server-health/');
+  logger.info('🏥 Healthcheck in /.well-known/apollo/server-health/');
 });
