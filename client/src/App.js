@@ -1,25 +1,22 @@
 import React, { Component } from 'react';
-import './App.css';
+import { Switch, BrowserRouter, Route } from 'react-router-dom';
+import Board from './components/Board';
+import Homepage from './components/Homepage';
+
 
 class App extends Component {
   render() {
     return (
-      <div className="container" style={{marginTop: '12%'}}>
-        <header>
-          <h1>MAGIC MAZE</h1>
-          <div className="logo">
-            🏹⚔️🎩🔫
-          </div>
-        </header>
-        <div className="row">
-          <div className="col" style={{textAlign: 'center'}}>
-            <button className="btn btn-primary btn-lg" type="button">Find a Lobby</button>
-            <button className="btn btn-success btn-lg ml-4" type="button">Play Singleplayer</button>
-          </div>
-        </div>
+      <div>
+        <BrowserRouter>
+          <Switch>
+            <Route exact path="/" component={Homepage} />
+            <Route path="/board" component={Board} />
+          </Switch>
+        </BrowserRouter>
       </div>
     );
   }
 }
 
-export default App;
+export default App; 
