@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from 'reactstrap';
+import PropTypes from 'prop-types';
 import './Homepage.css';
 
 const Homepage = (props) => {
@@ -26,6 +27,10 @@ const Homepage = (props) => {
       </div>
     </div>
   );
+};
+
+Homepage.propTypes = {
+  history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
 };
 
 export default Homepage;
