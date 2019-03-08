@@ -9,5 +9,6 @@ const mazetile = new mongoose.Schema({
 });
 
 module.exports = {
+  mazeTileSchema: mazetile,
   MazeTile: db.collection('MazeTile', mazetile),
 };
