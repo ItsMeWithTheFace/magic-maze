@@ -10,6 +10,7 @@ const gameState = new mongoose.Schema({
   items_claimed: { type: Boolean, required: true },
   characters_escaped: { type: Boolean, required: true },
   unused_searches: [{ type: ObjectId, required: true }],
+  unused_mazeTiles: [{ type: ObjectId, required: true }],
 });
 
 module.exports = {
