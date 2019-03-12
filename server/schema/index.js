@@ -17,6 +17,10 @@ const queries = gql`
     # Tile
     tiles(mazeTileID: ID!): [Tile!]
     tile(tileID: ID!): Tile
+
+    # Character
+    characters(gameStateId: ID!) : [Character!]
+    character(characterID: ID!): Character!
   }
 `;
 
@@ -35,6 +39,10 @@ const mutations = gql`
     createTile(type: String!, gameState: ID!): Tile!
     updateTileCoordinates(tileID: ID!, coordinates: CoordinatesInput!): Tile!
     rotateTile(tileID: ID!, orientation: Orientation!): Tile!
+  
+    # Character
+    createCharacter(gameState: ID!, colour: String!): Character!
+    updateCharacterCoordinates(characterID: ID!, coordinates: CoordinatesInput!): Character!
   }
 `;
 
