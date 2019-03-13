@@ -1,7 +1,9 @@
 const _ = require('lodash');
 const { ObjectId } = require('mongoose').Types;
-const { MAZETILE_TILE_CONFIGS, CHARACTER_COLOR_CONFIG, CHARACTER_COORDINATES_CONFIG } = require('../common/consts');
 const { shuffle } = require('../common/utils');
+const {
+  WALL_TYPE, MAZETILE_TILE_CONFIGS, CHARACTER_COLOR_CONFIG, CHARACTER_COORDINATES_CONFIG,
+} = require('../common/consts');
 
 const mazeTileCreation = async (gameStateID, models) => {
   const mazeTileResult = [];
@@ -25,7 +27,7 @@ const mazeTileCreation = async (gameStateID, models) => {
         mazeTileID: mazeTile._id,
         coordinates: null,
         neighbours: [],
-        type: 'wall',
+        type: WALL_TYPE,
       };
       const tileResults = [];
       // Creates all tiles with default values
