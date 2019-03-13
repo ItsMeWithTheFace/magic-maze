@@ -2,7 +2,11 @@ const _ = require('lodash');
 const { ObjectId } = require('mongoose').Types;
 const { shuffle } = require('../common/utils');
 const {
-  WALL_TYPE, MAZETILE_TILE_CONFIGS, CHARACTER_COLOR_CONFIG, CHARACTER_COORDINATES_CONFIG,
+  WALL_TYPE,
+  SEARCH_TYPE,
+  MAZETILE_TILE_CONFIGS,
+  CHARACTER_COLOR_CONFIG,
+  CHARACTER_COORDINATES_CONFIG,
 } = require('../common/consts');
 
 const mazeTileCreation = async (gameStateID, models) => {
@@ -43,6 +47,7 @@ const mazeTileCreation = async (gameStateID, models) => {
       await Promise.all(tileResults.map(async (tile, j) => {
         const completeTile = _.merge({}, tile, MAZETILE_TILE_CONFIGS[i][j]);
         completeTile.neighbours.map((val) => {
+          // remap neighbours from the config file to Tile IDs
           switch (val) {
             case null: return null;
             case -1: return wallConst._id;
@@ -67,6 +72,20 @@ const characterCreation = async (gameRes, models) => {
   });
 };
 
+const updateUnusedSearches = async (gameRes, models) => {
+  const firstMazeTile = await models.MazeTile.findOne({ gameState: gameRes._id, spriteID: 0 });
+  const unusedSearches = await models.Tile.find({
+    mazeTile: firstMazeTile._id, type: SEARCH_TYPE,
+  }).toArray();
+  models.GameState.update({ gameStateID: gameRes._id }, { unused_searches: unusedSearches });
+};
+
+const updateUnusedMazeTiles = async (gameRes, models) => {
+  const allMazeTiles = await models.MazeTile.find({ gameState: gameRes._id }).toArray();
+  const reorderedMazeTiles = allMazeTiles[0] + shuffle(allMazeTiles.splice(1));
+  models.GameState.update({ gameStateID: gameRes._id }, { unused_mazeTiles: reorderedMazeTiles });
+};
+
 module.exports = {
   Query: {
     gameState: async (__, { gameStateID }, { models }) => models.Tile
@@ -83,28 +102,18 @@ module.exports = {
         unused_mazeTiles: [],
       };
       const gameRes = await models.GameState.insertOne({ initialGameState });
-
-      // character creation
-      characterCreation(gameRes, models);
+      const characters = characterCreation(gameRes, models);
 
       await mazeTileCreation(gameRes, models);
 
-      // update unsued tiles thigns in gamestate
+      const updateSearch = updateUnusedSearches(gameRes, models);
+      const updateMazeTile = updateUnusedMazeTiles(gameRes, models);
+
+      await characters;
+      await updateSearch;
+      await updateMazeTile;
 
       return gameRes._id;
     },
   },
 };
-
-// tile JSON:
-/**
- * {
- *    coordinates: null,
- *    neighbours: [],
- * 
- * }
- * 
- *  neighbour configs
- * [[null,0,0,1], [], ...
- * ]
- */
