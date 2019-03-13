@@ -16,6 +16,8 @@ const mazeTileCreation = async (gameStateID, models) => {
     mazeTileResult.push(models.MazeTile.insertOne({ initialMazeTile }));
   }
 
+  
+
   // After inserting MazeTiles, create and insert their respective tiles
 
   // MAZETILE_TILE_CONFIGS = [ mt1, mt2, mt3, mt4, ..., mt12 ]
@@ -24,29 +26,47 @@ const mazeTileCreation = async (gameStateID, models) => {
 
   // bigRes will be in the form of [ mt1, mt2, ..., mt12 ]
   // and each mt will have a list of 16 tiles
-  const bigRes = [];
+
+  /**
+   * await Promise.all(files.map(async (file) => {
+      const contents = await fs.readFile(file, 'utf8')
+      console.log(contents)
+    }));
+   */
 
   await Promise.all(mazeTileResult).then((res) => {
-    res.forEach((mazeTile, index) => {
+    res.forEach(async (mazeTile, i) => {
+      const wallConst = {
+        _id: ObjectId.toString(),
+        mazeTileID: mazeTile._id,
+        coordinates: null,
+        neighbours: [],
+        type: 'wall',
+      };
       const tileResults = [];
       for (let j = 0; j < 16; j += 1) {
         const initialTile = {
+          _id: ObjectId.toString(),
           mazeTileID: mazeTile._id,
           coordinates: null,
-          neighbours: [],
-          type: null,
         };
-        tileResults.push(models.Tiles.insertOne({ initialTile }));
+        tileResults.push(initialTile);
       }
 
       // Update tiles neighbours
-      bigRes.push(Promise.all(tileResults).then({
-        // adjust neighbours, MAZETILE_TILE_CONFIGS[index]
+      await Promise.all(tileResults.map(async (tile, j) => {
+        const completeTile = Object.assign({}, tile, MAZETILE_TILE_CONFIGS[i][j]);
+        completeTile.neighbours.map((val) => {
+          switch (val) {
+            case null: return null;
+            case -1: return wallConst._id;
+            default: return tileResults[val]._id;
+          }
+        });
+        await models.Tile.insertOne({ completeTile });
       }));
     });
   });
-
-  await Promise.all(bigRes);
 };
 
 module.exports = {

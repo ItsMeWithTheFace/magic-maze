@@ -1,5 +1,6 @@
+// neighbours: [top, left, bottom, right]
 const MAZETILE1_TILE_NEIGHBOUR_CONFIG = [
-  { type: '', neighbours: [null, 0, 0, 1] },
+  { type: '', neighbours: [null, -1, 0, 1] },
   { type: '', neighbours: [null, 0, 0, 1] },
   { type: '', neighbours: [null, 0, 0, 1] },
   { type: '', neighbours: [null, 0, 0, 1] },
