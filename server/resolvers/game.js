@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const { ObjectId } = require('mongoose').Types;
-const { MAZETILE_TILE_CONFIGS } = require('../common/consts');
+const { MAZETILE_TILE_CONFIGS, CHARACTER_COLOR_CONFIG, CHARACTER_COORDINATES_CONFIG } = require('../common/consts');
+const { shuffle } = require('../common/utils');
 
 const mazeTileCreation = async (gameStateID, models) => {
   const mazeTileResult = [];
@@ -12,7 +13,6 @@ const mazeTileCreation = async (gameStateID, models) => {
       gameState: gameStateID,
       spriteID: i,
     };
-
     mazeTileResult.push(models.MazeTile.insertOne({ initialMazeTile }));
   }
 
@@ -51,10 +51,18 @@ const mazeTileCreation = async (gameStateID, models) => {
       }));
     });
   });
+};
 
-  // assign characters starting location
-  // inserting mazetiles into gamestate
-  // insert the first, starting, the rest random for random pop
+const characterCreation = async (gameRes, models) => {
+  const shuffledCoordinates = shuffle(CHARACTER_COORDINATES_CONFIG);
+  CHARACTER_COLOR_CONFIG.foreach((colour, index) => {
+    const initalCharacter = {
+      colour,
+      gameState: gameRes._id,
+      coordinates: shuffledCoordinates[index],
+    };
+    models.Character.insertOne({ initalCharacter });
+  });
 };
 
 module.exports = {
@@ -74,17 +82,14 @@ module.exports = {
       };
       const gameRes = await models.GameState.insertOne({ initialGameState });
 
-      mazeTileCreation(gameRes, models);
+      // character creation
+      characterCreation(gameRes, models);
 
-      return gameRes;
+      await mazeTileCreation(gameRes, models);
 
-      // Loop through JSON that holds all mazetiles
-      // and create the mazetiles
-      // as we loop mazetiles, inside that we loop tile creation
+      // update unsued tiles thigns in gamestate
 
-      // After loop, create characters and randomize starting location
-
-      // 4 player randomize actions
+      return gameRes._id;
     },
   },
 };

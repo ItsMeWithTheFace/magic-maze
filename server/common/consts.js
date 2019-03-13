@@ -23,4 +23,15 @@ const MAZETILE_TILE_CONFIGS = [
 
 ];
 
-module.exports = { MAZETILE_TILE_CONFIGS };
+const CHARACTER_COLOR_CONFIG = [
+  'orange', 'purple', 'yellow', 'green',
+];
+
+const CHARACTER_COORDINATES_CONFIG = [
+  { x: 1, y: 1 },
+  { x: 1, y: 2 },
+  { x: 2, y: 1 },
+  { x: 2, y: 2 },
+];
+
+module.exports = { MAZETILE_TILE_CONFIGS, CHARACTER_COLOR_CONFIG, CHARACTER_COORDINATES_CONFIG };
