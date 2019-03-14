@@ -280,6 +280,12 @@ const MAZETILE_11_TILE_NEIGHBOUR_CONFIG = [
   { type: NORMAL_TYPE, neighbours: [11, 14, -1, -1] },
 ];
 
+const DIRECTIONS = {
+  UP: 0,
+  LEFT: 1,
+  DOWN: 2,
+  RIGHT: 3,
+};
 
 const MAZETILE_TILE_CONFIGS = [
   MAZETILE_0_TILE_NEIGHBOUR_CONFIG,
@@ -308,6 +314,7 @@ const CHARACTER_COORDINATES_CONFIG = [
 ];
 
 module.exports = {
+  DIRECTIONS,
   WALL_TYPE,
   ENTRY_TYPE,
   ESCALATOR_TYPE,
