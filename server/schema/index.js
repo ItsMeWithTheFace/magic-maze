@@ -30,8 +30,6 @@ const mutations = gql`
     createGameState: GameState!
     deleteGameState(gameStateID: ID!): Boolean
     updateGameStateItems(gameStateID: ID!, vortexEnabled: Boolean, itemsClaimed: Boolean, charactersEscaped: Boolean): GameState!
-    addUnusedSearches(gameStateID: ID!, unusedSearches: [ID!]): GameState!
-    popUnusedMazeTile(gameStateID: ID!): MazeTile!
 
     # MazeTile
     rotateMazeTile(mazeTileID: ID!, orientation: Orientation!): MazeTile!
@@ -40,7 +38,7 @@ const mutations = gql`
     updateTileCoordinates(tileID: ID!, coordinates: CoordinatesInput!): Tile!
   
     # Character
-    updateCharacterCoordinates(characterID: ID!, coordinates: CoordinatesInput!): Character!
+    moveCharacter(startCoordinates: CoordinatesInput!, endCoordinates: CoordinatesInput!, characterID: ID!): Character!
   }
 `;
 
