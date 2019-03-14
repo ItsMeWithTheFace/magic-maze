@@ -1,18 +1,20 @@
 const { ObjectId } = require('mongoose').Types;
-const {  } = require('../common/consts');
+const {
+  ENTRY_TYPE, WALL_TYPE, ESCALATOR_TYPE, VORTEX_TYPE, SEARCH_TYPE, ITEM_TYPE, TIME_TYPE, EXIT_TYPE,
+} = require('../common/consts');
 
 module.exports = {
   Tile: {
     __resolveType(tile) {
       switch (tile.type) {
-        case 'entry': return 'Entry';
-        case 'wall': return 'Wall';
-        case 'escalator': return 'Escalator';
-        case 'vortex': return 'Vortex';
-        case 'search': return 'Search';
-        case 'item': return 'Item';
-        case 'time': return 'Time';
-        case 'exit': return 'Exit';
+        case ENTRY_TYPE: return 'Entry';
+        case WALL_TYPE: return 'Wall';
+        case ESCALATOR_TYPE: return 'Escalator';
+        case VORTEX_TYPE: return 'Vortex';
+        case SEARCH_TYPE: return 'Search';
+        case ITEM_TYPE: return 'Item';
+        case TIME_TYPE: return 'Time';
+        case EXIT_TYPE: return 'Exit';
         default: return 'Normal';
       }
     },
@@ -20,7 +22,7 @@ module.exports = {
   Query: {
     tile: async (_, { tileID }, { models }) => models.Tile.findOne({ _id: ObjectId(tileID) }),
     tiles: async (_, { mazeTileID }, { models }) => models.Tile
-      .find({ mazeTile: mazeTileID })
+      .find({ mazeTileID: ObjectId(mazeTileID) })
       .toArray(),
   },
 };
