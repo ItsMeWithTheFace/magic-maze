@@ -15,7 +15,7 @@ const {
 const mazeTileCreation = async (gameStateID, models) => {
   const mazeTileResult = [];
   // Creates all MazeTile objects and insert to DB
-  for (let i = 0; i < 1; i += 1) {
+  for (let i = 0; i < 12; i += 1) {
     const initialMazeTile = {
       orientation: 0,
       adjacentMazeTiles: [],
@@ -77,21 +77,20 @@ const characterCreation = async (gameStateID, models) => {
 
 const updateUnusedSearches = async (gameStateID, models) => {
   const firstMazeTile = await models.MazeTile.findOne({ gameState: gameStateID });
-  const unusedSearches = await models.Tile.find({
+  let unusedSearches = await models.Tile.find({
     mazeTileID: firstMazeTile._id, type: SEARCH_TYPE,
   }).toArray();
-  unusedSearches.map(tile => tile._id);
+  unusedSearches = unusedSearches.map(tile => tile._id);
   await models.GameState
-    .updateOne({ _id: gameStateID }, { $set: { unusedSearches } });
+    .updateOne({ _id: gameStateID }, { $set: { unused_searches: unusedSearches } });
 };
 
 const updateUnusedMazeTiles = async (gameStateID, models) => {
   const allMazeTiles = await models.MazeTile.find({ gameState: gameStateID }).toArray();
   const reorderedMazeTiles = _.concat([allMazeTiles[0]], shuffle(allMazeTiles.splice(1)))
     .map(mazeTile => mazeTile._id);
-  console.log(reorderedMazeTiles);
   await models.GameState
-    .updateOne({ _id: gameStateID }, { $set: { unusedMazeTiles: reorderedMazeTiles } });
+    .updateOne({ _id: gameStateID }, { $set: { unused_mazeTiles: reorderedMazeTiles } });
 };
 
 module.exports = {
