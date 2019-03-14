@@ -1,4 +1,5 @@
 /* eslint-disable object-curly-newline */
+/* eslint-disable max-len */
 const WALL_TYPE = 'wall';
 const ENTRY_TYPE = 'entry';
 const ESCALATOR_TYPE = 'escalator';
@@ -14,34 +15,27 @@ const PURPLE = 'purple';
 const YELLOW = 'yellow';
 const GREEN = 'green';
 
-/**
-  claimed: { type: Boolean }, // Item tiles
-  used: { type: Boolean }, // Time tiles
-  escaped: { type: Boolean }, // Exit tiles
-  searched: { type: Boolean }, // Search tiles
- */
-
 // neighbours: [top, left, bottom, right]
 const MAZETILE_0_TILE_NEIGHBOUR_CONFIG = [
-  { type: TIME_TYPE, neighbours: [-1, -1, -1, 1], used: false },
-  { type: NORMAL_TYPE, neighbours: [-1, 0, 5, 2] },
-  { type: SEARCH_TYPE, neighbours: [null, 1, 6, 3], colour: ORANGE, searched: false },
-  { type: VORTEX_TYPE, neighbours: [-1, 2, -1, -1], colour: PURPLE },
+  { type: TIME_TYPE, neighbours: [-1, -1, -1, 1], used: false, coordinates: { x: 0, y: 0 } },
+  { type: NORMAL_TYPE, neighbours: [-1, 0, 5, 2], coordinates: { x: 1, y: 0 } },
+  { type: SEARCH_TYPE, neighbours: [null, 1, 6, 3], colour: ORANGE, searched: false, coordinates: { x: 2, y: 0 } },
+  { type: VORTEX_TYPE, neighbours: [-1, 2, -1, -1], colour: PURPLE, coordinates: { x: 3, y: 0 } },
 
-  { type: SEARCH_TYPE, neighbours: [0, null, 8, 5], colour: PURPLE, searched: false },
-  { type: NORMAL_TYPE, neighbours: [1, 4, 9, 6] },
-  { type: NORMAL_TYPE, neighbours: [2, 5, 10, 7] },
-  { type: VORTEX_TYPE, neighbours: [-1, 6, -1, -1], colour: YELLOW },
+  { type: SEARCH_TYPE, neighbours: [0, null, 8, 5], colour: PURPLE, searched: false, coordinates: { x: 0, y: -1 } },
+  { type: NORMAL_TYPE, neighbours: [1, 4, 9, 6], coordinates: { x: 1, y: -1 } },
+  { type: NORMAL_TYPE, neighbours: [2, 5, 10, 7], coordinates: { x: 2, y: -1 } },
+  { type: VORTEX_TYPE, neighbours: [-1, 6, -1, -1], colour: YELLOW, coordinates: { x: 3, y: -1 } },
 
-  { type: VORTEX_TYPE, neighbours: [-1, -1, -1, 9], colour: ORANGE },
-  { type: NORMAL_TYPE, neighbours: [5, 8, 13, 10] },
-  { type: NORMAL_TYPE, neighbours: [6, 9, 14, -1] },
-  { type: SEARCH_TYPE, neighbours: [-1, -1, 15, null], colour: GREEN, searched: false },
+  { type: VORTEX_TYPE, neighbours: [-1, -1, -1, 9], colour: ORANGE, coordinates: { x: 0, y: -2 } },
+  { type: NORMAL_TYPE, neighbours: [5, 8, 13, 10], coordinates: { x: 1, y: -2 } },
+  { type: NORMAL_TYPE, neighbours: [6, 9, 14, -1], coordinates: { x: 2, y: -2 } },
+  { type: SEARCH_TYPE, neighbours: [-1, -1, 15, null], colour: GREEN, searched: false, coordinates: { x: 3, y: -2 } },
 
-  { type: VORTEX_TYPE, neighbours: [-1, -1, -1, 13], colour: GREEN },
-  { type: SEARCH_TYPE, neighbours: [9, 12, null, 14], colour: YELLOW, searched: false },
-  { type: NORMAL_TYPE, neighbours: [10, 13, -1, 15] },
-  { type: NORMAL_TYPE, neighbours: [11, 14, -1, -1] },
+  { type: VORTEX_TYPE, neighbours: [-1, -1, -1, 13], colour: GREEN, coordinates: { x: 0, y: -3 } },
+  { type: SEARCH_TYPE, neighbours: [9, 12, null, 14], colour: YELLOW, searched: false, coordinates: { x: 1, y: -3 } },
+  { type: NORMAL_TYPE, neighbours: [10, 13, -1, 15], coordinates: { x: 2, y: -3 } },
+  { type: NORMAL_TYPE, neighbours: [11, 14, -1, -1], coordinates: { x: 3, y: -3 } },
 ];
 
 const MAZETILE_1_TILE_NEIGHBOUR_CONFIG = [
