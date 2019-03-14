@@ -31,7 +31,7 @@ const mazeTileCreation = async (gameStateID, models) => {
       // constant used for all wall edges between different tiles
       const wallConst = {
         _id: ObjectId(),
-        mazeTileID: mazeTile.insertedId,
+        mazeTile: mazeTile.insertedId,
         coordinates: null,
         neighbours: [],
         type: WALL_TYPE,
@@ -41,7 +41,7 @@ const mazeTileCreation = async (gameStateID, models) => {
       for (let j = 0; j < 16; j += 1) {
         const initialTile = {
           _id: ObjectId(),
-          mazeTileID: mazeTile.insertedId,
+          mazeTile: mazeTile.insertedId,
           coordinates: null,
         };
         tileResults.push(initialTile);
@@ -69,6 +69,8 @@ const characterCreation = async (gameStateID, models) => {
     const initalCharacter = {
       colour,
       gameState: gameStateID,
+      itemClaimed: false,
+      characterEscaped: false,
       coordinates: shuffledCoordinates[index],
     };
     models.Character.insertOne({ ...initalCharacter });
@@ -78,7 +80,7 @@ const characterCreation = async (gameStateID, models) => {
 const updateUnusedSearches = async (gameStateID, models) => {
   const firstMazeTile = await models.MazeTile.findOne({ gameState: gameStateID });
   const unusedSearches = await models.Tile.find({
-    mazeTileID: firstMazeTile._id, type: SEARCH_TYPE,
+    mazeTile: firstMazeTile._id, type: SEARCH_TYPE,
   }).project({ coordinates: 1 }).toArray();
 
   await models.GameState
@@ -105,8 +107,8 @@ module.exports = {
       // create gameState object and get ID
       const initialGameState = {
         vortex_boolean: true,
-        items_claimed: false,
-        characters_excaped: false,
+        allItemsClaimed: false,
+        allCharactersEscaped: false,
         unused_searches: [],
         unused_mazeTiles: [],
       };
