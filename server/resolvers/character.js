@@ -15,8 +15,8 @@ module.exports = {
   Query: {
     character: async (__, { characterID }, { models }) => models.Character
       .findOne({ _id: ObjectId(characterID) }),
-    characters: async (__, { gameStateId }, { models }) => models.Character
-      .find({ mazeTile: gameStateId })
+    characters: async (__, { gameStateID }, { models }) => models.Character
+      .find({ gameState: ObjectId(gameStateID) })
       .toArray(),
   },
   Mutation: {

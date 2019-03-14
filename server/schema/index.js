@@ -19,7 +19,7 @@ const queries = gql`
     tile(tileID: ID!): Tile
 
     # Character
-    characters(gameStateId: ID!) : [Character!]
+    characters(gameStateID: ID!) : [Character!]
     character(characterID: ID!): Character!
   }
 `;
@@ -33,6 +33,7 @@ const mutations = gql`
 
     # MazeTile
     rotateMazeTile(mazeTileID: ID!, orientation: Orientation!): MazeTile!
+    popUnusedMazeTile(gameStateID: ID!): MazeTile
 
     # Tile
     updateTileCoordinates(tileID: ID!, coordinates: CoordinatesInput!): Tile!
