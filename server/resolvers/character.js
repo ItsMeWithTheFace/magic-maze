@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const mongoose = require('mongoose');
 
 const { ObjectId } = mongoose.Types;
@@ -7,7 +8,9 @@ const {
   WALL_TYPE,
   VORTEX_TYPE,
   ESCALATOR_TYPE,
+  SEARCH_TYPE,
   ITEM_TYPE,
+  ENTRY_TYPE,
   EXIT_TYPE,
 } = require('../common/consts');
 
@@ -165,6 +168,66 @@ module.exports = {
         );
       }
       return character;
+    },
+    searchAction: async (_parent, { gameStateID, characterID, searchTileID }, { models }) => {
+      /**
+       * First we must check there are tile to pop out of gameState
+       *
+       * After that, we pop the next tile from the gameState and find out where
+       * its entry tile is located (like which side it's on), then we must line
+       * up the entry tile with the search `tile` that was passed in
+       *
+       * After finding the orientation, we update the MazeTile with the new
+       * orientation and then update the tiles inside of it so that their
+       * neighbours are properly oriented
+       *
+       * After that we must traverse through the tiles and update coordinates
+       *
+       * After we will look for the edge case where the new mazetile lines up
+       * with another mazetile separate from the one they came from (use the
+       * unused_search from gameState)
+       *
+       * After we will update mazetile adjacent maze tiles
+       *
+       * in the end we return game state
+       */
+      
+      const character = await models.Character
+        .findOne({ _id: characterID, gameState: ObjectId(gameStateID) });
+      const gameState = await models.GameState
+        .findOne({ gameState: ObjectId(gameStateID) });
+      const tile = await models.Tile
+        .findOne({ _id: searchTileID, gameState: ObjectId(gameStateID) });
+      
+      if (tile.type !== SEARCH_TYPE
+        || character.colour !== tile.colour
+        || gameState.unusedMazeTiles.length === 0) {
+        return gameState;
+      }
+      // pop next mazeTile
+      const nextMazeTile = _.head(gameState.unusedMazeTiles);
+      gameState.unusedMazeTiles = _.drop(gameState.unusedMazeTiles);
+
+      const searchTileDir = _.findIndex(tile.neighbours, neighbour => neighbour === null);
+
+      const entryTile = await models.Tile.findOne({
+        gameState: ObjectId(gameStateID),
+        mazeTile: ObjectId(nextMazeTile._id),
+        type: ENTRY_TYPE,
+      });
+
+
+      // Change orientation for nextMazeTile and all the tile's neighbours
+      // await updateTileOrientation(nextMazeTile, orientation, models);
+
+      // Set coordinates for tiles
+      // await setCoordinates(entryTile, x, y, models);
+
+      // Need to check the edge cases for adjacent mazetiles and update them
+      // await updateAdjacentMazeTiles(nextMazeTile, models);
+
+
+      return gameState;
     },
   },
 };

@@ -37,7 +37,7 @@ const mutations = gql`
   
     # Character
     moveCharacter(gameStateID: ID!, characterID: ID!, startTileID: ID!, endTileID: ID!): Character!
-    searchAction(gameStateID: ID!, tileID: ID!, characterID: ID!): gameState!
+    searchAction(gameStateID: ID!, characterID: ID!, searchTileID: ID!): gameState!
   }
 `;
 
