@@ -143,27 +143,20 @@ module.exports = {
     items_claimed: Boolean!         # all lads standing on Item tile
     characters_escaped: Boolean!    # all lads on Exit tile
      */
-    updateGameStateItems: async (__, {
-      gameStateID, vortexEnabled, itemsClaimed, charactersEscaped,
-    }, { models }) => {
+    updateGameStateItems: async (__, args, { models }) => {
       try {
-        // const updateParams = {};
-        // console.log(itemsClaimed)
-        // if ('vortexEnabled' in args) updateParams.vortexEnabled = vortexEnabled;
-        // if ('itemsClaimed' in args) updateParams.itemsClaimed = itemsClaimed;
-        // if ('charactersEscaped' in args) updateParams.charactersEscaped = charactersEscaped;
+        const updateParams = {};
+        if ('vortexEnabled' in args) updateParams.vortexEnabled = args.vortexEnabled;
+        if ('itemsClaimed' in args) updateParams.itemsClaimed = args.itemsClaimed;
+        if ('charactersEscaped' in args) updateParams.charactersEscaped = args.charactersEscaped;
 
         const results = await models.GameState
-          .updateOne({ _id: ObjectId(gameStateID) }, {
-            $set: {
-              vortexEnabled,
-              itemsClaimed,
-              charactersEscaped,
-            },
+          .updateOne({ _id: ObjectId(args.gameStateID) }, {
+            $set: updateParams,
           });
 
         if ((results.result.n) > 0) {
-          return gameStateID;
+          return args.gameStateID;
         }
 
         throw Error('Could not find game state');
