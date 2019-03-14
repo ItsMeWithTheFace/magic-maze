@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { coordinatesSchema } = require('./common');
+
 const { ObjectId } = mongoose.Schema.Types;
 
 
@@ -15,9 +16,7 @@ tile.add({
 
   // special tile attributes
   colour: { type: String },
-  claimed: { type: Boolean }, // Item tiles
   used: { type: Boolean }, // Time tiles
-  escaped: { type: Boolean }, // Exit tiles
   searched: { type: Boolean }, // Search tiles
 });
 
