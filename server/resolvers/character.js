@@ -13,14 +13,14 @@ const {
 
 module.exports = {
   Query: {
-    character: async (__, { characterID }, { models }) => models.Character
+    character: async (_parent, { characterID }, { models }) => models.Character
       .findOne({ _id: ObjectId(characterID) }),
-    characters: async (__, { gameStateID }, { models }) => models.Character
+    characters: async (_parent, { gameStateID }, { models }) => models.Character
       .find({ gameState: ObjectId(gameStateID) })
       .toArray(),
   },
   Mutation: {
-    moveCharacter: async (__, args, { models }) => {
+    moveCharacter: async (_parent, args, { models }) => {
       /**
        * Thinking about having a switch case here or something to
        * determine which action the character performed

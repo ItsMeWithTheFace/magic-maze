@@ -20,8 +20,8 @@ module.exports = {
     },
   },
   Query: {
-    tile: async (_, { tileID }, { models }) => models.Tile.findOne({ _id: ObjectId(tileID) }),
-    tiles: async (_, { mazeTileID }, { models }) => models.Tile
+    tile: async (_parent, { tileID }, { models }) => models.Tile.findOne({ _id: ObjectId(tileID) }),
+    tiles: async (_parent, { mazeTileID }, { models }) => models.Tile
       .find({ mazeTileID: ObjectId(mazeTileID) })
       .toArray(),
   },

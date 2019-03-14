@@ -95,11 +95,11 @@ const updateUnusedMazeTiles = async (gameStateID, models) => {
 
 module.exports = {
   Query: {
-    gameState: async (__, { gameStateID }, { models }) => models.Tile
+    gameState: async (_parent, { gameStateID }, { models }) => models.Tile
       .findOne({ _id: ObjectId(gameStateID) }),
   },
   Mutation: {
-    createGameState: async (__, ___, { models }) => {
+    createGameState: async (_parent, _args, { models }) => {
       await mongoose.connect(process.env.MONGODB_DEV, { useNewUrlParser: true });
 
       // create gameState object and get ID
@@ -134,12 +134,7 @@ module.exports = {
         throw err;
       }
     },
-    /**
-     * vortex_enabled: Boolean!
-    items_claimed: Boolean!         # all lads standing on Item tile
-    characters_escaped: Boolean!    # all lads on Exit tile
-     */
-    updateGameStateItems: async (__, args, { models }) => {
+    updateGameStateItems: async (_parent, args, { models }) => {
       try {
         const updateParams = {};
         if ('vortexEnabled' in args) updateParams.vortexEnabled = args.vortexEnabled;
