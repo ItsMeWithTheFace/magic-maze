@@ -28,6 +28,7 @@ const mutations = gql`
   type Mutation {
     # GameState
     createGameState: GameState!
+    deleteGameState(gameStateID: ID!): Boolean
     updateGameStateItems(gameStateID: ID!, vortex_enabled: Boolean, items_claimed: Boolean, characters_escaped: Boolean): GameState!
     addUnusedSearches(gameStateID: ID!, unusedSearches: [ID!]): GameState!
     popUnusedMazeTile(gameStateID: ID!): MazeTile!
