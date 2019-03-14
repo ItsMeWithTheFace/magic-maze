@@ -148,18 +148,21 @@ module.exports = {
 
       if (movedStraightLine) {
         if (!gameState.allItemsClaimed) {
-          updateItemClaimed(character, endTile, models);
-          checkCharactersOnTile(ObjectId(gameStateID), ITEM_TYPE, models);
+          await updateItemClaimed(character, endTile, models);
+          await checkCharactersOnTile(ObjectId(gameStateID), ITEM_TYPE, models);
         }
         if (gameState.allItemsClaimed && !gameState.allCharactersEscaped) {
-          updateCharacterEscaped(character, endTile, models);
-          checkCharactersOnTile(ObjectId(gameStateID), EXIT_TYPE, models);
+          await updateCharacterEscaped(character, endTile, models);
+          await checkCharactersOnTile(ObjectId(gameStateID), EXIT_TYPE, models);
         }
       }
       if (shouldMove) {
         // update character
         character.coordinates = endTile.coordinates;
         // update to db
+        await models.Character.updateOne(
+          { _id: ObjectId(character._id) }, { $set: { coordinates: character.coordinates } },
+        );
       }
       return character;
     },

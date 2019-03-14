@@ -32,8 +32,6 @@ const mutations = gql`
     updateGameStateItems(gameStateID: ID!, vortexEnabled: Boolean, itemsClaimed: Boolean, charactersEscaped: Boolean): GameState!
 
     # MazeTile
-    rotateMazeTile(mazeTileID: ID!, orientation: Orientation!): MazeTile!
-    popUnusedMazeTile(gameStateID: ID!): MazeTile
 
     # Tile
   
