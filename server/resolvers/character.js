@@ -38,6 +38,10 @@ module.exports = {
        *
        * Basically a lot of helper functions will need to be here
        */
+
+      const startTile = await models.Tile.findOne({ _id: args.startTileId });
+      const endTile = await models.Tile.findOne({ _id: args.endTileId });
+
     },
   },
 };

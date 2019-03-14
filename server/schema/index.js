@@ -36,10 +36,9 @@ const mutations = gql`
     popUnusedMazeTile(gameStateID: ID!): MazeTile
 
     # Tile
-    updateTileCoordinates(tileID: ID!, coordinates: CoordinatesInput!): Tile!
   
     # Character
-    moveCharacter(startCoordinates: CoordinatesInput!, endCoordinates: CoordinatesInput!, characterID: ID!): Character!
+    moveCharacter(startTileID: ID!, endTileID: ID!, characterID: ID!): Character!
   }
 `;
 
