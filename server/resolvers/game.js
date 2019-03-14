@@ -85,14 +85,14 @@ const updateUnusedSearches = async (gameStateID, models) => {
     mazeTileID: firstMazeTile._id, type: SEARCH_TYPE,
   }).toArray();
   await models.GameState
-    .updateOne({ _id: gameStateID }, { $set: { unused_searches: unusedSearches } });
+    .updateOne({ _id: gameStateID }, { $set: { unusedSearches } });
 };
 
 const updateUnusedMazeTiles = async (gameStateID, models) => {
   const allMazeTiles = await models.MazeTile.find({ gameState: gameStateID }).toArray();
   const reorderedMazeTiles = _.concat([allMazeTiles[0]], shuffle(allMazeTiles.splice(1)));
   await models.GameState
-    .updateOne({ _id: gameStateID }, { $set: { unused_mazeTiles: reorderedMazeTiles } });
+    .updateOne({ _id: gameStateID }, { $set: { unusedMazeTiles: reorderedMazeTiles } });
 };
 
 module.exports = {
@@ -108,11 +108,11 @@ module.exports = {
       const gameStateID = ObjectId();
       const initialGameState = {
         _id: gameStateID,
-        vortex_boolean: true,
-        items_claimed: false,
-        characters_excaped: false,
-        unused_searches: [],
-        unused_mazeTiles: [],
+        vortexEnabled: true,
+        itemsClaimed: false,
+        charactersEscaped: false,
+        unusedSearches: [],
+        unusedMazeTiles: [],
       };
 
       const session = await mongoose.startSession();
@@ -135,6 +135,40 @@ module.exports = {
         logger.error(err);
         await session.abortTransaction();
         session.endSession();
+        throw err;
+      }
+    },
+    /**
+     * vortex_enabled: Boolean!
+    items_claimed: Boolean!         # all lads standing on Item tile
+    characters_escaped: Boolean!    # all lads on Exit tile
+     */
+    updateGameStateItems: async (__, {
+      gameStateID, vortexEnabled, itemsClaimed, charactersEscaped,
+    }, { models }) => {
+      try {
+        // const updateParams = {};
+        // console.log(itemsClaimed)
+        // if ('vortexEnabled' in args) updateParams.vortexEnabled = vortexEnabled;
+        // if ('itemsClaimed' in args) updateParams.itemsClaimed = itemsClaimed;
+        // if ('charactersEscaped' in args) updateParams.charactersEscaped = charactersEscaped;
+
+        const results = await models.GameState
+          .updateOne({ _id: ObjectId(gameStateID) }, {
+            $set: {
+              vortexEnabled,
+              itemsClaimed,
+              charactersEscaped,
+            },
+          });
+
+        if ((results.result.n) > 0) {
+          return gameStateID;
+        }
+
+        throw Error('Could not find game state');
+      } catch (err) {
+        logger.error(err);
         throw err;
       }
     },

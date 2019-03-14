@@ -29,7 +29,7 @@ const mutations = gql`
     # GameState
     createGameState: GameState!
     deleteGameState(gameStateID: ID!): Boolean
-    updateGameStateItems(gameStateID: ID!, vortex_enabled: Boolean, items_claimed: Boolean, characters_escaped: Boolean): GameState!
+    updateGameStateItems(gameStateID: ID!, vortexEnabled: Boolean, itemsClaimed: Boolean, charactersEscaped: Boolean): GameState!
     addUnusedSearches(gameStateID: ID!, unusedSearches: [ID!]): GameState!
     popUnusedMazeTile(gameStateID: ID!): MazeTile!
 
