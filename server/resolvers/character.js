@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const mongoose = require('mongoose');
 
 const { ObjectId } = mongoose.Types;
@@ -6,14 +5,10 @@ const logger = require('../common/logger');
 const {
   DIRECTIONS,
   WALL_TYPE,
-  SEARCH_TYPE,
   VORTEX_TYPE,
   ESCALATOR_TYPE,
   ITEM_TYPE,
   EXIT_TYPE,
-  MAZETILE_TILE_CONFIGS,
-  CHARACTER_COLOR_CONFIG,
-  CHARACTER_COORDINATES_CONFIG,
 } = require('../common/consts');
 
 const vortexMovement = (gameState, startTile, endTile, character) => (
@@ -70,13 +65,13 @@ const checkCharactersOnTile = async (gameStateID, tileType, models) => {
 
 const updateItemClaimed = async (endTile, character, models) => {
   await models.Character.updateOne(
-    { _id: ObjectId(character._id) }, { $set: { itemClaimed: endTile.type === ITEM_TYPE }}
+    { _id: ObjectId(character._id) }, { $set: { itemClaimed: endTile.type === ITEM_TYPE } },
   );
 };
 
 const updateCharacterEscaped = async (endTile, character, models) => {
   await models.Character.updateOne(
-    { _id: ObjectId(character._id) }, { $set: { characterEscaped: endTile.type === EXIT_TYPE }}
+    { _id: ObjectId(character._id) }, { $set: { characterEscaped: endTile.type === EXIT_TYPE } },
   );
 };
 
