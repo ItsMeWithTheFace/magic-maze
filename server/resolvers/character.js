@@ -78,6 +78,28 @@ const updateCharacterEscaped = async (endTile, character, models) => {
   );
 };
 
+const rotateList = (array, steps) => (
+  _.concat(_.drop(array, steps), _.take(array, array.length - steps))
+);
+
+const updateTileOrientation = async (nextMazeTileID, orientation, models) => {
+  await models.MazeTile.updateOne({ _id: nextMazeTileID }, { $set: { orientation } });
+  const tiles = await models.Tile.find({ mazeTile: nextMazeTileID }).toArray();
+
+  await Promise.all(tiles.map(async (tile) => {
+    const newNeighbours = rotateList(tile.neighbours, orientation);
+    await models.Tile.updateOne({ _id: tile._id }, { $set: { neighbour: newNeighbours } });
+  }));
+};
+
+const setCoordinates = async (entryTile, x, y, models) => {
+
+};
+
+const updateAdjacentMazeTiles = async (nextMazeTile, models) => {
+
+};
+
 module.exports = {
   Query: {
     character: async (_parent, { characterID }, { models }) => models.Character
@@ -191,16 +213,16 @@ module.exports = {
        *
        * in the end we return game state
        */
-      
+
       const character = await models.Character
         .findOne({ _id: characterID, gameState: ObjectId(gameStateID) });
       const gameState = await models.GameState
         .findOne({ gameState: ObjectId(gameStateID) });
-      const tile = await models.Tile
+      const searchTile = await models.Tile
         .findOne({ _id: searchTileID, gameState: ObjectId(gameStateID) });
-      
-      if (tile.type !== SEARCH_TYPE
-        || character.colour !== tile.colour
+
+      if (searchTile.type !== SEARCH_TYPE
+        || character.colour !== searchTile.colour
         || gameState.unusedMazeTiles.length === 0) {
         return gameState;
       }
@@ -208,7 +230,7 @@ module.exports = {
       const nextMazeTile = _.head(gameState.unusedMazeTiles);
       gameState.unusedMazeTiles = _.drop(gameState.unusedMazeTiles);
 
-      const searchTileDir = _.findIndex(tile.neighbours, neighbour => neighbour === null);
+      const searchTileDir = _.findIndex(searchTile.neighbours, neighbour => neighbour === null);
 
       const entryTile = await models.Tile.findOne({
         gameState: ObjectId(gameStateID),
@@ -216,12 +238,21 @@ module.exports = {
         type: ENTRY_TYPE,
       });
 
+      let entryTileDir = _.findIndex(entryTile.neighbours, neighbour => neighbour === null);
 
+      // Someone check this logic makes sense, basically trying to line up the search with
+      // entry tile basically if the search tile has a null in neighbour at index 2 entry
+      // tile needs a null at index 0 for them to be lined up
+      let orientation = 0;
+      while (Math.abs(searchTileDir - entryTileDir) !== 2 && orientation < 3) {
+        orientation += 1;
+        entryTileDir = (entryTileDir + 1) % 4;
+      }
       // Change orientation for nextMazeTile and all the tile's neighbours
-      // await updateTileOrientation(nextMazeTile, orientation, models);
+      await updateTileOrientation(ObjectId(nextMazeTile._id), orientation, models);
 
       // Set coordinates for tiles
-      // await setCoordinates(entryTile, x, y, models);
+      await setCoordinates(entryTile, searchTile.coordinates.x, searchTile.coordinates.y, models);
 
       // Need to check the edge cases for adjacent mazetiles and update them
       // await updateAdjacentMazeTiles(nextMazeTile, models);
