@@ -77,10 +77,10 @@ const characterCreation = async (gameStateID, models) => {
 
 const updateUnusedSearches = async (gameStateID, models) => {
   const firstMazeTile = await models.MazeTile.findOne({ gameState: gameStateID });
-  let unusedSearches = await models.Tile.find({
+  const unusedSearches = await models.Tile.find({
     mazeTileID: firstMazeTile._id, type: SEARCH_TYPE,
-  }).toArray();
-  unusedSearches = unusedSearches.map(tile => tile._id);
+  }).project({ coordinates: 1 }).toArray();
+
   await models.GameState
     .updateOne({ _id: gameStateID }, { $set: { unused_searches: unusedSearches } });
 };
