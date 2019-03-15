@@ -81,10 +81,10 @@ const updateUnusedSearches = async (gameStateID, models) => {
   const firstMazeTile = await models.MazeTile.findOne({ gameState: gameStateID });
   const unusedSearches = await models.Tile.find({
     mazeTile: firstMazeTile._id, type: SEARCH_TYPE,
-  }).project({ coordinates: 1 }).toArray();
+  }).project({ coordinates: true }).toArray();
 
   await models.GameState
-    .updateOne({ _id: gameStateID }, { $set: { unused_searches: unusedSearches } });
+    .updateOne({ _id: gameStateID }, { $set: { unusedSearches } });
 };
 
 const updateUnusedMazeTiles = async (gameStateID, models) => {
@@ -92,7 +92,7 @@ const updateUnusedMazeTiles = async (gameStateID, models) => {
   const reorderedMazeTiles = _.concat([allMazeTiles[0]], shuffle(allMazeTiles.splice(1)))
     .map(mazeTile => mazeTile._id);
   await models.GameState
-    .updateOne({ _id: gameStateID }, { $set: { unused_mazeTiles: reorderedMazeTiles } });
+    .updateOne({ _id: gameStateID }, { $set: { unusedMazeTiles: reorderedMazeTiles } });
 };
 
 module.exports = {
@@ -109,8 +109,8 @@ module.exports = {
         vortex_boolean: true,
         allItemsClaimed: false,
         allCharactersEscaped: false,
-        unused_searches: [],
-        unused_mazeTiles: [],
+        unusedSearches: [],
+        unusedMazeTiles: [],
       };
 
       const session = await mongoose.startSession();
