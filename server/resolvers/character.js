@@ -88,7 +88,7 @@ const updateTileOrientation = async (nextMazeTileID, orientation, models) => {
 
   await Promise.all(tiles.map(async (tile) => {
     const newNeighbours = rotateList(tile.neighbours, orientation);
-    await models.Tile.updateOne({ _id: tile._id }, { $set: { neighbour: newNeighbours } });
+    await models.Tile.updateOne({ _id: tile._id }, { $set: { neighbours: newNeighbours } });
   }));
 };
 
@@ -117,8 +117,72 @@ const setCoordinates = async (tile, x, y, models) => {
   }
 };
 
-const updateAdjacentMazeTiles = async (nextMazeTile, models) => {
+const manhattanDistance = (coord1, coord2) => (
+  Math.abs(coord1.x - coord2.x) + Math.abs(coord1.y - coord2.y)
+);
 
+const updateAdjacentMazeTiles = async (nextMazeTile, models) => {
+  // given new MazeTile to add do the following
+  // for each search in newMazeTile, check if there is an adjacent MazeTile using unusedSearches
+  // if there is, update that mazetile's null to newmazeTile's search tile and vice versa. remove that tile from unusedSearches
+  // if not, add this newMazeTile's seaerch tile to the list of new searchTiles
+
+  let found = false;
+  // assuming coordinates are set for nextMazeTile
+  const searchTiles = await models.Tile.find({
+    mazeTile: ObjectId(nextMazeTile._id),
+    type: SEARCH_TYPE,
+  }).toArray();
+
+  const gameState = await models.GameState
+    .findOne({ _id: ObjectId(nextMazeTile.gameState) });
+
+  let newUnusedSearches = [];
+  const uncheckedSearchTiles = _.clone(searchTiles.neighbours); // these lads have no coordinates
+
+  await Promise.all(gameState.unusedSearches.forEach(async (unusedTile) => {
+    await Promise.all(searchTiles.forEach(async (searchTile, i) => {
+      // found an adjacent node
+      if (manhattanDistance(unusedTile.coordinates, searchTile) === 1
+        && uncheckedSearchTiles.has(searchTile)) {
+        found = true;
+        uncheckedSearchTiles.splice(i, 1);
+
+        // update new search tile's neighbour
+        const adjacentTileIdx = _.findIndex(searchTile.neighbours, neighbour => neighbour === null);
+        searchTile.neighbours[adjacentTileIdx] = unusedTile._id;
+        await models.Tile
+          .updateOne({ _id: searchTile._id }, {
+            $set: { neighbours: searchTile.neighbours, searched: true },
+          });
+
+        // update (existing) adjacent maze tile's neighbour
+        const unusedTileObj = await models.Tile.findOne({ _id: unusedTile._id });
+        const adjUnusedTileIdx = _.findIndex(
+          unusedTileObj.neighbours,
+          neighbour => neighbour === null,
+        );
+        unusedTileObj.neighbours[adjUnusedTileIdx] = searchTile._id;
+
+        await models.Tile.updateOne({ _id: unusedTileObj._id }, {
+          $set: { neighbours: unusedTileObj.neighbours, searched: true },
+        });
+      }
+    }));
+
+    if (!found) {
+      newUnusedSearches.push(unusedTile);
+    } else {
+      found = false;
+    }
+  }));
+
+  // update adjacent maze tiles
+  newUnusedSearches = _.concat(newUnusedSearches, uncheckedSearchTiles);
+
+  await models.GameState.updateOne({ _id: gameState._id }, {
+    $set: { unusedSearches: newUnusedSearches },
+  });
 };
 
 module.exports = {
@@ -276,7 +340,7 @@ module.exports = {
       await setCoordinates(entryTile, searchTile.coordinates.x, searchTile.coordinates.y, models);
 
       // Need to check the edge cases for adjacent mazetiles and update them
-      // await updateAdjacentMazeTiles(nextMazeTile, models);
+      await updateAdjacentMazeTiles(nextMazeTile, models);
 
 
       return gameState;
