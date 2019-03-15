@@ -15,6 +15,7 @@
     "pixi-viewport": "^3.21.2",
     "pixi.js": "^5.0.0-rc.2",
     "prop-types": "^15.7.2",
+    "q": "^1.5.1",
     "react": "^16.8.4",
     "react-apollo": "^2.5.2",
     "react-dom": "^16.8.4",

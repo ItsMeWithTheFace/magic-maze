@@ -2,92 +2,88 @@ const { gql } = require('apollo-server-express');
 
 module.exports = gql`
   input TileInput {
-    mazeTile: ID!
+    mazeTileID: ID!
     coordinates: CoordinatesInput
-    neighbours: [TileInput]
+    neighbours: [ID]
     type: String!
     colour: String
-    claimed: Boolean
     used: Boolean
-    escaped: Boolean
     searched: Boolean
   }
 
   interface Tile {
     _id: ID!
-    mazeTile: ID!
+    mazeTileID: ID!
     coordinates: Coordinates
-    neighbours: [Tile]
+    neighbours: [ID]
   }
 
   type Normal implements Tile {
     _id: ID!
-    mazeTile: ID!
+    mazeTileID: ID!
     coordinates: Coordinates
-    neighbours: [Tile]
+    neighbours: [ID]
   }
 
   type Entry implements Tile {
     _id: ID!
-    mazeTile: ID!
+    mazeTileID: ID!
     coordinates: Coordinates
-    neighbours: [Tile]
+    neighbours: [ID]
   }
 
   type Wall implements Tile {
     _id: ID!
-    mazeTile: ID!
+    mazeTileID: ID!
     coordinates: Coordinates
-    neighbours: [Tile]
+    neighbours: [ID]
   }
 
   type Escalator implements Tile {
     _id: ID!
-    mazeTile: ID!
+    mazeTileID: ID!
     coordinates: Coordinates
-    neighbours: [Tile]
+    neighbours: [ID]
   }
 
   type Vortex implements Tile {
     _id: ID!
-    mazeTile: ID!
+    mazeTileID: ID!
     coordinates: Coordinates
-    neighbours: [Tile]
+    neighbours: [ID]
     colour: String!
   }
 
   type Search implements Tile {
     _id: ID!
-    mazeTile: ID!
+    mazeTileID: ID!
     coordinates: Coordinates
-    neighbours: [Tile]
+    neighbours: [ID]
     colour: String!
     searched: Boolean!
   }
 
   type Item implements Tile {
     _id: ID!
-    mazeTile: ID!
+    mazeTileID: ID!
     coordinates: Coordinates
-    neighbours: [Tile]
+    neighbours: [ID]
     colour: String!
-    claimed: Boolean!
   }
 
   type Time implements Tile {
     _id: ID!
-    mazeTile: ID!
+    mazeTileID: ID!
     coordinates: Coordinates
-    neighbours: [Tile]
+    neighbours: [ID]
     used: Boolean!
   }
 
   type Exit implements Tile {
     _id: ID!
-    mazeTile: ID!
+    mazeTileID: ID!
     coordinates: Coordinates
-    neighbours: [Tile]
+    neighbours: [ID]
     colour: String!
-    escaped: Boolean!
   }
 `;

@@ -17,6 +17,10 @@ const queries = gql`
     # Tile
     tiles(mazeTileID: ID!): [Tile!]
     tile(tileID: ID!): Tile
+
+    # Character
+    characters(gameStateID: ID!) : [Character!]
+    character(characterID: ID!): Character!
   }
 `;
 
@@ -24,17 +28,16 @@ const mutations = gql`
   type Mutation {
     # GameState
     createGameState: GameState!
-    updateGameStateItems(gameStateID: ID!, vortex_enabled: Boolean, items_claimed: Boolean, characters_escaped: Boolean): GameState!
-    addUnusedSearches(gameStateID: ID!, unusedSearches: [ID!]): GameState!
+    deleteGameState(gameStateID: ID!): Boolean
+    updateGameStateItems(gameStateID: ID!, vortexEnabled: Boolean, itemsClaimed: Boolean, charactersEscaped: Boolean): GameState!
 
     # MazeTile
-    createMazeTile(tiles: [TileInput!]!, gameStateID: ID!, adjacentMazeTiles: [MazeTileInput!]): MazeTile!
-    rotateMazeTile(mazeTileID: ID!, orientation: Orientation!): MazeTile!
 
     # Tile
-    createTile(type: String!, gameState: ID!): Tile!
-    updateTileCoordinates(tileID: ID!, coordinates: CoordinatesInput!): Tile!
-    rotateTile(tileID: ID!, orientation: Orientation!): Tile!
+  
+    # Character
+    moveCharacter(gameStateID: ID!, characterID: ID!, startTileID: ID!, endTileID: ID!): Character!
+    searchAction(gameStateID: ID!, characterID: ID!, searchTileID: ID!): GameState!
   }
 `;
 
