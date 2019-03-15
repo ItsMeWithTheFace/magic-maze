@@ -7,7 +7,7 @@ import './Board.css';
 const SCALE = 4;
 const TILE_SIZE = 16;
 const MAZE_SIZE = 64;
-const X_OFFSET = 140;
+const X_OFFSET = 350;
 const Y_OFFSET = 80;
 
 // load all maze tile images
@@ -20,7 +20,6 @@ const images = importAll(require.context('../assets/maze/', false, /\.(png|jpe?g
 const app = new PIXI.Application({
   width: window.innerWidth,
   height: window.innerHeight,
-  resolution: SCALE,
 });
 app.renderer.backgroundColor = 0x334D5C;
 // set the scale mode (makes it so the pixels aren't blurry when scaling)
@@ -51,13 +50,13 @@ function setup() {
   const character = new PIXI.Sprite(characterTexture);
   character.x = X_OFFSET;
   character.y = Y_OFFSET;
+  character.scale.set(SCALE, SCALE);
 
   viewport.on('clicked', (e) => {
-    character.x += Math.floor((e.world.x - character.x) / TILE_SIZE) * TILE_SIZE;
-    character.y += Math.floor((e.world.y - character.y) / TILE_SIZE) * TILE_SIZE;
-
-    // character.x = e.world.x;
-    // character.y = e.world.y;
+    character.x += Math.floor((e.world.x - character.x) / (TILE_SIZE * SCALE))
+     * (TILE_SIZE * SCALE);
+    character.y += Math.floor((e.world.y - character.y) / (TILE_SIZE * SCALE))
+     * (TILE_SIZE * SCALE);
   });
 
   // render initial maze tile
@@ -68,6 +67,7 @@ function setup() {
   const startTile = new PIXI.Sprite(startTileTexture);
   startTile.x = X_OFFSET;
   startTile.y = Y_OFFSET;
+  startTile.scale.set(SCALE, SCALE);
 
   // must add to viewport (adding to stage will not allow it to scroll)
   viewport.addChild(startTile);
