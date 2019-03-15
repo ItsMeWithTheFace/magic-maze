@@ -92,8 +92,29 @@ const updateTileOrientation = async (nextMazeTileID, orientation, models) => {
   }));
 };
 
-const setCoordinates = async (entryTile, x, y, models) => {
-
+const setCoordinates = async (tile, x, y, models) => {
+  if (tile !== null && tile.type !== WALL_TYPE && tile.coordinates !== null) {
+    const coordinates = { x, y };
+    await models.Tile.updateOne({ _id: ObjectId(tile._id) }, { $set: { coordinates } });
+    await Promise.all(tile.neighbours.map(async (neighbour, index) => {
+      switch (index) {
+        case 0:
+          await setCoordinates(neighbour, x, y - 1, models);
+          break;
+        case 1:
+          await setCoordinates(neighbour, x - 1, y, models);
+          break;
+        case 2:
+          await setCoordinates(neighbour, x, y + 1, models);
+          break;
+        case 3:
+          await setCoordinates(neighbour, x + 1, y, models);
+          break;
+        default:
+          break;
+      }
+    }));
+  }
 };
 
 const updateAdjacentMazeTiles = async (nextMazeTile, models) => {
