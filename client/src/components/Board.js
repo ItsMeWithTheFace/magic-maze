@@ -53,6 +53,15 @@ function setup() {
   character.scale.set(SCALE, SCALE);
 
   viewport.on('clicked', (e) => {
+    /**
+     * update the character's position based on click position
+     * algorithm idea:
+     * - calculate the delta between the click and the character's position
+     * - convert delta to the number of tile spaces to increase this by
+     *   (i.e. this should return the number of spaces moved)
+     * - scale up the coordinate to the actual coordinate
+     */
+
     character.x += Math.floor((e.world.x - character.x) / (TILE_SIZE * SCALE))
      * (TILE_SIZE * SCALE);
     character.y += Math.floor((e.world.y - character.y) / (TILE_SIZE * SCALE))
