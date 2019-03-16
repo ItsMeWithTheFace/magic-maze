@@ -9,8 +9,8 @@ module.exports = gql`
   }
 
   type Coordinates {
-    x: Int!
-    y: Int!
+    x: Int
+    y: Int
   }
 
   input CoordinatesInput {
