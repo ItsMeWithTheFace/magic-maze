@@ -1,6 +1,8 @@
+import gql from 'graphql-tag';
 import React, { Component } from 'react';
 import Viewport from 'pixi-viewport';
 import * as PIXI from 'pixi.js';
+import client from '../common/utils';
 import spritesheet from '../assets/spritesheet.png';
 import './Board.css';
 
@@ -11,8 +13,15 @@ const MAZE_SIZE = 64;
 const X_OFFSET = 350;
 const Y_OFFSET = 80;
 
-// load all maze tile images
-// (enter ../assets/maze/ and download all image filetypes)
+// character objects
+let selected = '';
+let red; let green; let blue; let purple;
+
+/**
+ * load all the maze tiles
+ * traverses file and maps all the images
+ * @param {*} r regex
+ */
 function importAll(r) {
   return r.keys().map(r);
 }
@@ -27,13 +36,47 @@ app.renderer.backgroundColor = 0x334D5C;
 // set the scale mode (makes it so the pixels aren't blurry when scaling)
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
+// move characters based on selected option
+/**
+ * move the selected character
+ * move algorithm:
+ * - calculate the delta between the click and the character's position
+ * - convert delta to the number of tile spaces to increase this by
+ *     (i.e. this should return the number of tiles moved; integer between 0 and n)
+ * - scale up the coordinate to the actual coordinate
+ * @param {*} e click event
+ */
+function move(e) {
+  if (selected) {
+    switch (selected) {
+      case 'red':
+        red.x += Math.floor((e.world.x - red.x) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+        red.y += Math.floor((e.world.y - red.y) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+        break;
+      case 'purple':
+        purple.x += Math.floor((e.world.x - purple.x) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+        purple.y += Math.floor((e.world.y - purple.y) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+        break;
+      case 'green':
+        green.x += Math.floor((e.world.x - green.x) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+        green.y += Math.floor((e.world.y - green.y) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+        break;
+      case 'blue':
+        blue.x += Math.floor((e.world.x - blue.x) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+        blue.y += Math.floor((e.world.y - blue.y) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 // create viewport
 const viewport = new Viewport({
   screenWidth: window.innerWidth,
   screenHeight: window.innerHeight,
   interaction: app.renderer.plugins.interaction,
 });
-
 // add and setup the viewport to the stage
 // this must be done before adding any sprites
 app.stage.addChild(viewport);
@@ -41,64 +84,85 @@ viewport
   .drag()
   .pinch()
   .wheel()
-  .decelerate();
+  .decelerate()
+  .on('clicked', move);
 
-// actually loads all the sprites into the stage
-// callback to the loader
-function setup() {
-  // render the character
-  const characterTexture = new PIXI.Texture(
+/**
+ * create a new character
+ * @param {*} offset offset value in the spritesheet (hard-coded)
+ * @param {*} data the character JSON
+ */
+function createCharacter(offset, data) {
+  const texture = new PIXI.Texture(
     PIXI.utils.TextureCache[spritesheet],
-    new PIXI.Rectangle(0, 0, TILE_SIZE, TILE_SIZE),
+    new PIXI.Rectangle(offset * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE),
   );
-  const character = new PIXI.Sprite(characterTexture);
-  character.x = X_OFFSET;
-  character.y = Y_OFFSET;
-  // scaling the stage makes calculating coordinates a nightmare
-  // scaling the character is a little tedious but makes up for it in coordinate simplicity
+  const character = new PIXI.Sprite(texture);
+  character.x = data.coordinates.x * (TILE_SIZE * SCALE) + X_OFFSET;
+  character.y = data.coordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET;
   character.scale.set(SCALE, SCALE);
-  // adding sprite event handling (the same as viewport event handling)
   character.interactive = true;
-  // NOTE: unlike viewport, this doesn't work with 'clicked'!
-  character.on('mousedown', (e) => {
-    console.log(e);
-    console.log('keviniscool');
+  // sprite handling can only be caught using 'click'
+  // (this is different from the viewport for some reason...)
+  character.on('click', () => {
+    selected = selected === '' || selected !== data.colour ? data.colour : '';
   });
-
-  // this only works with the option 'clicked' for some reason
-  // using 'mousedown' does not return the world dimensions
-  viewport.on('clicked', (e) => {
-    /**
-     * update the character's position based on click position
-     * algorithm idea:
-     * - calculate the delta between the click and the character's position
-     * - convert delta to the number of tile spaces to increase this by
-     *   (i.e. this should return the number of spaces moved; integer between 0 and n)
-     * - scale up the coordinate to the actual coordinate
-     */
-
-    character.x += Math.floor((e.world.x - character.x) / (TILE_SIZE * SCALE))
-     * (TILE_SIZE * SCALE);
-    character.y += Math.floor((e.world.y - character.y) / (TILE_SIZE * SCALE))
-     * (TILE_SIZE * SCALE);
-  });
-
-  // render initial maze tile
-  const startTileTexture = new PIXI.Texture(
-    PIXI.utils.TextureCache[images[0]],
-    new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
-  );
-  const startTile = new PIXI.Sprite(startTileTexture);
-  startTile.x = X_OFFSET;
-  startTile.y = Y_OFFSET;
-  startTile.scale.set(SCALE, SCALE);
-
-  // must add to viewport (adding to stage will not allow it to scroll)
-  viewport.addChild(startTile);
-  viewport.addChild(character);
+  return character;
 }
 
-// load character from spritesheet
+/**
+ * call backend and do initial setup
+ */
+const setup = () => {
+  const query = gql`
+    {
+      gameState(gameStateID: "5c8c55d0f0c3cd64e4978980") {
+        mazeTiles {
+          cornerCoordinates {
+            x
+            y
+          }
+          spriteID
+        }
+        characters {
+          colour
+          coordinates {
+            x
+            y
+          }
+        }
+      }
+    }
+  `;
+  client().query({ query }).then((results) => {
+    // render and create characters
+    red = createCharacter(3, results.data.gameState.characters.find(x => x.colour === 'red'));
+    purple = createCharacter(0, results.data.gameState.characters.find(x => x.colour === 'purple'));
+    blue = createCharacter(1, results.data.gameState.characters.find(x => x.colour === 'blue'));
+    green = createCharacter(2, results.data.gameState.characters.find(x => x.colour === 'green'));
+
+    // render initial maze tile
+    // TODO: perhaps abstract this into a separate function
+    const startTileTexture = new PIXI.Texture(
+      PIXI.utils.TextureCache[images[0]],
+      new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
+    );
+    const startTile = new PIXI.Sprite(startTileTexture);
+    startTile.x = X_OFFSET;
+    startTile.y = Y_OFFSET;
+    startTile.scale.set(SCALE, SCALE);
+
+    // add actors to the viewport
+    // (cannot add to stage otherwise scrolling will not work)
+    viewport.addChild(startTile);
+    viewport.addChild(red);
+    viewport.addChild(purple);
+    viewport.addChild(blue);
+    viewport.addChild(green);
+  });
+};
+
+// load sprites
 const spriteList = [{ url: spritesheet }];
 // we read all the images in the beginning
 // then add them all to this object to get the loader to load everything
