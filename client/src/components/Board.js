@@ -4,6 +4,7 @@ import * as PIXI from 'pixi.js';
 import spritesheet from '../assets/spritesheet.png';
 import './Board.css';
 
+// constants
 const SCALE = 4;
 const TILE_SIZE = 16;
 const MAZE_SIZE = 64;
@@ -11,6 +12,7 @@ const X_OFFSET = 350;
 const Y_OFFSET = 80;
 
 // load all maze tile images
+// (enter ../assets/maze/ and download all image filetypes)
 function importAll(r) {
   return r.keys().map(r);
 }
@@ -41,6 +43,8 @@ viewport
   .wheel()
   .decelerate();
 
+// actually loads all the sprites into the stage
+// callback to the loader
 function setup() {
   // render the character
   const characterTexture = new PIXI.Texture(
@@ -50,15 +54,26 @@ function setup() {
   const character = new PIXI.Sprite(characterTexture);
   character.x = X_OFFSET;
   character.y = Y_OFFSET;
+  // scaling the stage makes calculating coordinates a nightmare
+  // scaling the character is a little tedious but makes up for it in coordinate simplicity
   character.scale.set(SCALE, SCALE);
+  // adding sprite event handling (the same as viewport event handling)
+  character.interactive = true;
+  // NOTE: unlike viewport, this doesn't work with 'clicked'!
+  character.on('mousedown', (e) => {
+    console.log(e);
+    console.log('keviniscool');
+  });
 
+  // this only works with the option 'clicked' for some reason
+  // using 'mousedown' does not return the world dimensions
   viewport.on('clicked', (e) => {
     /**
      * update the character's position based on click position
      * algorithm idea:
      * - calculate the delta between the click and the character's position
      * - convert delta to the number of tile spaces to increase this by
-     *   (i.e. this should return the number of spaces moved)
+     *   (i.e. this should return the number of spaces moved; integer between 0 and n)
      * - scale up the coordinate to the actual coordinate
      */
 
@@ -85,6 +100,8 @@ function setup() {
 
 // load character from spritesheet
 const spriteList = [{ url: spritesheet }];
+// we read all the images in the beginning
+// then add them all to this object to get the loader to load everything
 images.forEach((url) => {
   spriteList.push(url);
 });
