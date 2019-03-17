@@ -310,7 +310,9 @@ module.exports = {
           },
         });
       }
-      return models.GameState.findOne({ _id: ObjectId(gameStateID) });
+
+      const gs = await models.GameState.findOne({ _id: ObjectId(gameStateID) });
+      return _.find(gs.characters, char => char.colour === characterColour);
     },
     searchAction: async (_parent, { gameStateID, characterID, searchTileID }, { models }) => {
       /**

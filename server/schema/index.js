@@ -29,7 +29,7 @@ const mutations = gql`
       userID: ID,
       characterColour: String!,
       endTileCoords: CoordinatesInput!,
-    ): GameState!
+    ): Character!
     searchAction(gameStateID: ID!, characterID: CoordinatesInput!, searchTileID: CoordinatesInput!): GameState!
   }
 `;

@@ -15,7 +15,7 @@ const Y_OFFSET = 80;
 
 // character objects
 let selected = '';
-let players = [];
+const players = [];
 
 /**
  * load all the maze tiles
@@ -64,20 +64,17 @@ function move(e) {
           endTileCoords:{ x: ${deltaX}, y: ${deltaY} },
         ) {
           _id
-          characters {
-            colour
-            coordinates {
-              x
-              y
-            }
+          colour
+          coordinates {
+            x
+            y
           }
         }
       }
     `;
     client().mutate({ mutation }).then((results) => {
-      const character = results.data.moveCharacter.characters.find(x => x.colour === selected);
-      players[selected].x = character.coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
-      players[selected].y = character.coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
+      players[selected].x = results.data.moveCharacter.coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
+      players[selected].y = results.data.moveCharacter.coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
     });
   }
 }
