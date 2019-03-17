@@ -15,7 +15,7 @@ const Y_OFFSET = 80;
 
 // character objects
 let selected = '';
-let red; let green; let blue; let purple;
+let players = [];
 
 /**
  * load all the maze tiles
@@ -39,7 +39,7 @@ PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 // move characters based on selected option
 /**
  * move the selected character
- * move algorithm:
+ * move algorithm:/
  * - calculate the delta between the click and the character's position
  * - convert delta to the number of tile spaces to increase this by
  *     (i.e. this should return the number of tiles moved; integer between 0 and n)
@@ -48,26 +48,37 @@ PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
  */
 function move(e) {
   if (selected) {
-    switch (selected) {
-      case 'red':
-        red.x += Math.floor((e.world.x - red.x) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-        red.y += Math.floor((e.world.y - red.y) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-        break;
-      case 'purple':
-        purple.x += Math.floor((e.world.x - purple.x) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-        purple.y += Math.floor((e.world.y - purple.y) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-        break;
-      case 'green':
-        green.x += Math.floor((e.world.x - green.x) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-        green.y += Math.floor((e.world.y - green.y) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-        break;
-      case 'blue':
-        blue.x += Math.floor((e.world.x - blue.x) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-        blue.y += Math.floor((e.world.y - blue.y) / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-        break;
-      default:
-        break;
-    }
+    const endX = players[selected].x + Math.floor((e.world.x - players[selected].x)
+     / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+    const endY = players[selected].y + Math.floor((e.world.y - players[selected].y)
+     / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+
+    const deltaX = (endX - X_OFFSET) / (TILE_SIZE * SCALE);
+    const deltaY = (endY - Y_OFFSET) / (TILE_SIZE * SCALE);
+    const mutation = gql`
+      mutation {
+        moveCharacter(
+          gameStateID: "5c8c55d0f0c3cd64e4978980",
+          userID: null,
+          characterColour: "${selected}",
+          endTileCoords:{ x: ${deltaX}, y: ${deltaY} },
+        ) {
+          _id
+          characters {
+            colour
+            coordinates {
+              x
+              y
+            }
+          }
+        }
+      }
+    `;
+    client().mutate({ mutation }).then((results) => {
+      const character = results.data.moveCharacter.characters.find(x => x.colour === selected);
+      players[selected].x = character.coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
+      players[selected].y = character.coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
+    });
   }
 }
 
@@ -136,10 +147,10 @@ const setup = () => {
   `;
   client().query({ query }).then((results) => {
     // render and create characters
-    red = createCharacter(3, results.data.gameState.characters.find(x => x.colour === 'red'));
-    purple = createCharacter(0, results.data.gameState.characters.find(x => x.colour === 'purple'));
-    blue = createCharacter(1, results.data.gameState.characters.find(x => x.colour === 'blue'));
-    green = createCharacter(2, results.data.gameState.characters.find(x => x.colour === 'green'));
+    players.red = createCharacter(3, results.data.gameState.characters.find(x => x.colour === 'red'));
+    players.purple = createCharacter(0, results.data.gameState.characters.find(x => x.colour === 'purple'));
+    players.blue = createCharacter(1, results.data.gameState.characters.find(x => x.colour === 'blue'));
+    players.green = createCharacter(2, results.data.gameState.characters.find(x => x.colour === 'green'));
 
     // render initial maze tile
     // TODO: perhaps abstract this into a separate function
@@ -155,10 +166,10 @@ const setup = () => {
     // add actors to the viewport
     // (cannot add to stage otherwise scrolling will not work)
     viewport.addChild(startTile);
-    viewport.addChild(red);
-    viewport.addChild(purple);
-    viewport.addChild(blue);
-    viewport.addChild(green);
+    viewport.addChild(players.red);
+    viewport.addChild(players.purple);
+    viewport.addChild(players.blue);
+    viewport.addChild(players.green);
   });
 };
 
