@@ -345,20 +345,23 @@ module.exports = {
       }
 
       if (movedStraightLine) {
-        if (!gameState.allItemsClaimed) {
+        if (endTile.type === ITEM_TYPE && !gameState.allItemsClaimed) {
           await updateItemClaimed(ObjectId(gameStateID), endTile, character.colour, models);
           await checkCharactersOnTile(gameState, ITEM_TYPE, models);
-        } else if (gameState.allItemsClaimed && !gameState.allCharactersEscaped) {
+        } else if (endTile.type === EXIT_TYPE
+          && gameState.allItemsClaimed
+          && !gameState.allCharactersEscaped) {
           await updateCharacterEscaped(ObjectId(gameStateID), endTile, character.colour, models);
           await checkCharactersOnTile(gameState, EXIT_TYPE, models);
         }
       }
 
+      let updatedCharacter;
       if (shouldMove) {
         // update character
         const { coordinates } = endTile;
         // update to db
-        await models.GameState.updateOne({
+        updatedCharacter = await models.GameState.findOneAndUpdate({
           _id: ObjectId(gameStateID),
           'characters.colour': characterColour,
         },
@@ -366,11 +369,12 @@ module.exports = {
           $set: {
             'characters.$.coordinates': coordinates,
           },
-        });
+        },
+        { returnOriginal: false });
       }
-
-      const gs = await models.GameState.findOne({ _id: ObjectId(gameStateID) });
-      return _.find(gs.characters, char => char.colour === characterColour);
+      return updatedCharacter
+        ? _.find(updatedCharacter.value.characters, char => char.colour === characterColour)
+        : character;
     },
     searchAction: async (_parent, {
       gameStateID,
