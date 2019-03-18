@@ -15,7 +15,7 @@ const TILE_SIZE = 16;
 const MAZE_SIZE = 64;
 const X_OFFSET = 350;
 const Y_OFFSET = 80;
-const GAME_ID = '5c8ef011d52d7f8251f9072c';
+const GAME_ID = '5c8fd9b9b7429789ed1cf8ad';
 
 // containers
 // (this is used for layering)

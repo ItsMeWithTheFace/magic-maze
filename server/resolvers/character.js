@@ -198,29 +198,30 @@ const updateAdjacentMazeTiles = async (
 
     // update adjacent tiles if they exist
     // not sure if this syntax works
-    const adjTile = await models.Tile.findOneAndUpdate({
+    const adjTile = await models.Tile.findOne({
       gameStateID,
       coordinates: coordinatesToFind,
       neighbours: { $type: 10 },
-    }, {
-      $set: {
-        searched: true,
-        'neighbours.$': tile._id,
-      },
     });
 
     // update current maze tile's tile neighbour with adjacent
     if (adjTile) {
-      await models.Tile.findOneAndUpdate({
-        gameStateID,
-        _id: tile._id,
-        neighbours: { $type: 10 },
-      }, {
-        $set: {
-          searched: true,
-          'neighbours.$': adjTile._id,
-        },
-      });
+      await Promise.all([
+        models.Tile.findOneAndUpdate({
+          _id: adjTile._id,
+          gameStateID,
+          neighbours: { $type: 10 },
+        }, {
+          $set: { 'neighbours.$': tile._id, searched: true },
+        }),
+        models.Tile.findOneAndUpdate({
+          _id: tile._id,
+          gameStateID,
+          neighbours: { $type: 10 },
+        }, {
+          $set: { 'neighbours.$': adjTile._id, searched: true },
+        }),
+      ]);
     }
   });
 };
