@@ -15,16 +15,18 @@ const TILE_SIZE = 16;
 const MAZE_SIZE = 64;
 const X_OFFSET = 350;
 const Y_OFFSET = 80;
-const GAME_ID = '5c8fd9b9b7429789ed1cf8ad';
+const GAME_ID = '5c8fdc9485481a8b483da54c';
 
 // containers
 // (this is used for layering)
 const characterContainer = new PIXI.Container();
 const mazeContainer = new PIXI.Container();
+const artifactContainer = new PIXI.Container();
 
 // character objects
 let selected = '';
 const players = [];
+let selector;
 
 // fontawesome
 library.add(faSearch);
@@ -86,6 +88,8 @@ function move(e) {
     client().mutate({ mutation }).then((results) => {
       players[selected].x = results.data.moveCharacter.coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
       players[selected].y = results.data.moveCharacter.coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
+      selector.x = players[selected].x;
+      selector.y = players[selected].y;
     });
   }
 }
@@ -124,6 +128,38 @@ function createCharacter(offset, data) {
   // sprite handling can only be caught using 'click'
   // (this is different from the viewport for some reason...)
   character.on('click', () => {
+    // initialize selector sprite
+    const selectorTexture = new PIXI.Texture(
+      PIXI.utils.TextureCache[spritesheet],
+      new PIXI.Rectangle(5 * TILE_SIZE, 4 * TILE_SIZE, TILE_SIZE, TILE_SIZE),
+    );
+    selector = new PIXI.Sprite(selectorTexture);
+    selector.x = character.x;
+    selector.y = character.y;
+    selector.scale.set(SCALE, SCALE);
+
+    // if there is nothing selected
+    if (selected === '') {
+      // add the selector icon
+      artifactContainer.addChild(selector);
+      viewport.addChild(artifactContainer);
+    // if swapping selected character
+    } else if (selected !== data.colour) {
+      // remove all selectors
+      for (let i = 0; i < artifactContainer.children.length; i += 1) {
+        artifactContainer.removeChildAt(i);
+      }
+      // add the new selector
+      artifactContainer.addChild(selector);
+      viewport.addChild(artifactContainer);
+    } else {
+      // remove all selectors
+      for (let i = 0; i < artifactContainer.children.length; i += 1) {
+        artifactContainer.removeChildAt(i);
+      }
+    }
+    // set selected character
+    // NOTE: may need to adjust the logic game logic for freeing selected characters
     selected = selected === '' || selected !== data.colour ? data.colour : '';
   });
   return character;
