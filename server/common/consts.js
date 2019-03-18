@@ -132,7 +132,7 @@ const MAZETILE_5_TILE_NEIGHBOUR_CONFIG = [
   { type: ITEM_TYPE, neighbours: [-1, -1, 6, -1], colour: BLUE },
   { type: WALL_TYPE, neighbours: [-1, -1, -1, -1] },
 
-  { type: SEARCH_TYPE, neighbours: [-1, null, -1, 5], colour: GREEN },
+  { type: SEARCH_TYPE, neighbours: [-1, null, -1, 5], colour: GREEN, searched: false },
   { type: NORMAL_TYPE, neighbours: [-1, 4, 9, 6] },
   { type: NORMAL_TYPE, neighbours: [2, 5, 10, -1] },
   { type: WALL_TYPE, neighbours: [-1, -1, -1, -1] },
@@ -143,7 +143,7 @@ const MAZETILE_5_TILE_NEIGHBOUR_CONFIG = [
   { type: ENTRY_TYPE, neighbours: [-1, 10, 15, null] },
 
   { type: WALL_TYPE, neighbours: [-1, -1, -1, -1] },
-  { type: SEARCH_TYPE, neighbours: [9, -1, null, -1], colour: RED },
+  { type: SEARCH_TYPE, neighbours: [9, -1, null, -1], colour: RED, searched: false },
   { type: WALL_TYPE, neighbours: [-1, -1, -1, -1] },
   { type: VORTEX_TYPE, neighbours: [11, -1, -1, -1], colour: PURPLE },
 ];

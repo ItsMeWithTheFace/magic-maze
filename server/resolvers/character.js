@@ -57,25 +57,27 @@ const moveDirection = async (gameState, characterColour, currTile, endTile, dire
 };
 
 const checkCharactersOnTile = async (gameState, tileType, models) => {
+  const { characters } = await models.GameState
+    .findOne({ _id: ObjectId(gameState._id) }, { _id: 0, characters: 1 });
   let counts;
   if (tileType === EXIT_TYPE && gameState.allItemsClaimed) {
-    counts = await models.GameState
-      .countDocuments({ _id: ObjectId(gameState._id), 'characters.characterEscaped': true });
+    counts = _.filter(characters, char => char.characterEscaped).length;
   } else if (tileType === ITEM_TYPE) {
-    counts = await models.GameState
-      .countDocuments({ _id: ObjectId(gameState._id), 'characters.itemClaimed': true });
+    counts = _.filter(characters, char => char.itemClaimed).length;
   }
 
   if (counts === 4) {
     if (tileType === EXIT_TYPE) {
       await models.GameState.updateOne(
         { _id: ObjectId(gameState._id) },
-        { allCharactersEscaped: true },
+        { $set: { allCharactersEscaped: true } },
       );
     } else if (tileType === ITEM_TYPE) {
       await models.GameState.updateOne({ _id: ObjectId(gameState._id) }, {
-        allItemsClaimed: true,
-        vortexEnabled: false,
+        $set: {
+          allItemsClaimed: true,
+          vortexEnabled: false,
+        },
       });
     }
   }
@@ -100,7 +102,7 @@ const updateCharacterEscaped = async (gameStateID, endTile, characterColour, mod
   },
   {
     $set: {
-      'characters.$.itemClaimed': endTile.type === EXIT_TYPE,
+      'characters.$.characterEscaped': endTile.type === EXIT_TYPE,
     },
   });
 };
@@ -346,9 +348,8 @@ module.exports = {
         if (!gameState.allItemsClaimed) {
           await updateItemClaimed(ObjectId(gameStateID), endTile, character.colour, models);
           await checkCharactersOnTile(gameState, ITEM_TYPE, models);
-        }
-        if (gameState.allItemsClaimed && !gameState.allCharactersEscaped) {
-          await updateCharacterEscaped(ObjectId(gameStateID), character, endTile, models);
+        } else if (gameState.allItemsClaimed && !gameState.allCharactersEscaped) {
+          await updateCharacterEscaped(ObjectId(gameStateID), endTile, character.colour, models);
           await checkCharactersOnTile(gameState, EXIT_TYPE, models);
         }
       }
