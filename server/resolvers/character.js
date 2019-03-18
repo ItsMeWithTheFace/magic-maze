@@ -407,6 +407,7 @@ module.exports = {
           gameStateID: ObjectId(gameStateID),
           coordinates: characterCoords,
           type: SEARCH_TYPE,
+          searched: false,
           colour: character.colour,
         });
       const nextMazeTile = _.find(gameState.mazeTiles, mt => !mt.cornerCoordinates);
