@@ -172,6 +172,10 @@ const updateAdjacentMazeTiles = async (
   ]);
 
   // look for current maze tile's search tiles and update their neighbours if they exist
+  // TODO: (Stephen/Rakin) need to check off old search tiles that lead into wall
+  // when a new mazeTile is added, basically a wall blocks a search tile instead
+  // of two search tiles connecting by accident. This is to prevent from using search
+  // tiles that haven't been used but are blocked by walls
   const searchTiles = await models.Tile.find({
     gameStateID,
     mazeTileID: nextMazeTileID,
