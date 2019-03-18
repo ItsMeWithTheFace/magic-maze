@@ -21,6 +21,17 @@
   align-items: center;
 }
 
+.timer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #DF5A49;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  font-size: 36px;
+  font-family: monospace;
+  padding: 0 10px 0 10px;
+}
+
 .player {
   height: 100px;
   width: 100px;

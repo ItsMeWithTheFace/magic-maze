@@ -268,7 +268,7 @@ class Board extends Component {
   render() {
     return (
       <div>
-        {/* temporarily remove sidenav (not required for singleplayer) */}
+        <div className="timer">3:00</div>
         <div className="sidenav">
           <div className="player">kev</div>
           <div className="player">rakin</div>
