@@ -30,7 +30,7 @@ const mazeTileCreation = async (gameStateID, models) => {
     // constant used for all wall edges between different tiles
     const wallConst = {
       _id: ObjectId(),
-      mazeTile: mazeTile._id,
+      mazeTileID: mazeTile._id,
       gameStateID,
       coordinates: null,
       neighbours: [],
