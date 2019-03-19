@@ -517,7 +517,7 @@ module.exports = {
       );
 
       const gs = await models.GameState.findOne({ _id: ObjectId(gameStateID) });
-      return _.find(gs.mazeTiles, mt => mt.spriteID === nextMazeTile.spriteID);
+      return coordSetMazeTile;
     },
   },
 };
