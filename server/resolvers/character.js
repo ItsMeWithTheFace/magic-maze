@@ -182,7 +182,7 @@ const updateAdjacentMazeTiles = async (
     type: SEARCH_TYPE,
     searched: false,
   }).toArray();
-  // not a promise so we don't need await Promise.all(...)
+
   searchTiles.forEach(async (tile) => {
     const direction = _.findIndex(tile.neighbours, t => t === null);
     let coordinatesToFind;
@@ -204,7 +204,6 @@ const updateAdjacentMazeTiles = async (
     }
 
     // update adjacent tiles if they exist
-    // not sure if this syntax works
     const adjTile = await models.Tile.findOne({
       gameStateID,
       coordinates: coordinatesToFind,
@@ -262,13 +261,37 @@ const setCornerCoordinate = async (
       break;
   }
 
-  await models.GameState.findOneAndUpdate({
+  const gs = await models.GameState.findOneAndUpdate({
     _id: gameStateID,
     'mazeTiles._id': nextMazeTileID,
   }, {
     $set: {
       'mazeTiles.$.cornerCoordinates': cornerCoordinates,
     },
+  }, { returnOriginal: false });
+
+  return _.find(gs.mazeTiles, mt => mt._id === nextMazeTileID);
+};
+
+const unsetBlockedSearches = async (gameStateID, nextMazeTileID, cornerCoordinates, models) => {
+  const coordinatesToFind = [];
+
+  // all the coordinates just outside this new mazetile
+  for (let i = 0; i < 4; i += 1) {
+    coordinatesToFind.push({ x: cornerCoordinates.x + i, y: cornerCoordinates.y - 1 });
+    coordinatesToFind.push({ x: cornerCoordinates.x + i, y: cornerCoordinates.y + 4 });
+    coordinatesToFind.push({ x: cornerCoordinates.x - 1, y: cornerCoordinates.y + i });
+    coordinatesToFind.push({ x: cornerCoordinates.x + 4, y: cornerCoordinates.y + i });
+  }
+
+  await models.Tile.updateMany({
+    gameStateID,
+    mazeTileID: nextMazeTileID,
+    coordinates: { $in: coordinatesToFind },
+    type: SEARCH_TYPE,
+    searched: false,
+  }, {
+    $set: { searched: true },
   });
 };
 
@@ -478,11 +501,18 @@ module.exports = {
       );
 
       // update the cornerCoordinates of the nextMazeTile
-      await setCornerCoordinate(
+      const mt = await setCornerCoordinate(
         ObjectId(gameStateID),
         ObjectId(entryTile._id),
         entryTileDir,
         ObjectId(nextMazeTile._id),
+        models,
+      );
+
+      await unsetBlockedSearches(
+        ObjectId(gameStateID),
+        ObjectId(mt._id),
+        mt.cornerCoordinates,
         models,
       );
 
