@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import client from '../common/utils';
 import spritesheet from '../assets/spritesheet.png';
+import Timer from './Timer';
 import './Board.css';
 
 // constants
@@ -15,7 +16,7 @@ const TILE_SIZE = 16;
 const MAZE_SIZE = 64;
 const X_OFFSET = 350;
 const Y_OFFSET = 80;
-const GAME_ID = '5c8fdc9485481a8b483da54c';
+const GAME_ID = '5c91366aec8edc30451f89e3';
 
 // containers
 // (this is used for layering)
@@ -304,7 +305,8 @@ class Board extends Component {
   render() {
     return (
       <div>
-        <div className="timer">3:00</div>
+        {/* <div className="timer">3:00</div> */}
+        <Timer />
         <div className="sidenav">
           <div className="player">kev</div>
           <div className="player">rakin</div>
