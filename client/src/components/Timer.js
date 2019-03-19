@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 const now = new Date();
 // TODO: pull this value from props
-const timer = new Date(now.getTime() + 1 * 60000);
+const timer = new Date(now.getTime() + 3 * 60000);
 const delta = new Date(timer.getTime() - now.getTime());
 
 class Timer extends Component {
