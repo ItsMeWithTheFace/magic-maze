@@ -270,7 +270,7 @@ const setCornerCoordinate = async (
     },
   }, { returnOriginal: false });
 
-  return _.find(gs.mazeTiles, mt => mt._id === nextMazeTileID);
+  return _.find(gs.mazeTiles, mt => ObjectId(mt._id).equals(ObjectId(nextMazeTileID)));
 };
 
 const unsetBlockedSearches = async (gameStateID, nextMazeTileID, cornerCoordinates, models) => {
