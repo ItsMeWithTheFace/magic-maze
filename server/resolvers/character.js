@@ -274,7 +274,6 @@ module.exports = {
   Mutation: {
     moveCharacter: async (_parent, {
       gameStateID,
-      userID,
       characterColour,
       endTileCoords,
     }, { models }) => {
