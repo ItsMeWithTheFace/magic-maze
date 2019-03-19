@@ -22,7 +22,8 @@
   },
   "scripts": {
     "start": "node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "./node_modules/.bin/eslint resolvers/ schema/ models/ common/ app.js"
   },
   "repository": {
     "type": "git",
