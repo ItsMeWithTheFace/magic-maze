@@ -501,7 +501,7 @@ module.exports = {
       );
 
       // update the cornerCoordinates of the nextMazeTile
-      const mt = await setCornerCoordinate(
+      const coordSetMazeTile = await setCornerCoordinate(
         ObjectId(gameStateID),
         ObjectId(entryTile._id),
         entryTileDir,
@@ -511,8 +511,8 @@ module.exports = {
 
       await unsetBlockedSearches(
         ObjectId(gameStateID),
-        ObjectId(mt._id),
-        mt.cornerCoordinates,
+        ObjectId(coordSetMazeTile._id),
+        coordSetMazeTile.cornerCoordinates,
         models,
       );
 
