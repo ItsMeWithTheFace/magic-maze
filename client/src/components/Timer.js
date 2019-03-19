@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
 const now = new Date();
-const timer = new Date(now.getTime() + 3 * 60000);
+const timer = new Date(now.getTime() + 1 * 60000);
 const delta = new Date(timer.getTime() - now.getTime());
 
 class Timer extends Component {
@@ -9,6 +9,8 @@ class Timer extends Component {
     super(props);
     this.state = {
       time: delta.getMinutes() * 60,
+      min: '3',
+      sec: '00',
     };
     this.tick = this.tick.bind(this);
     this.timer = setInterval(this.tick, 1000);
@@ -19,11 +21,11 @@ class Timer extends Component {
     const minutes = Math.floor(time / 60);
     const seconds = time - minutes * 60;
 
-    if (time !== 0) {
+    if (time >= 0) {
       this.setState({
-        time: time - 1,
+        time: time !== 0 ? time - 1 : 0,
         min: minutes,
-        sec: seconds > 10 ? seconds : `0${seconds}`,
+        sec: seconds >= 10 ? seconds : `0${seconds}`,
       });
     } else {
       clearInterval(this.timer);
