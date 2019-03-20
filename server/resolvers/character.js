@@ -120,36 +120,21 @@ const updateTileOrientation = async (gameStateID, nextMazeTileID, orientation, m
   }));
 };
 
-const setCoordinates = async (mazeTileID, tileID, xCoord, yCoord, models) => {
+const setCoordinates = async (mazeTileID, cornerCoordinates, orientation, models) => {
   const allTiles = await models.Tile.find({ mazeTileID }).toArray();
-  let queue = [{ _id: tileID, coordinates: { x: xCoord, y: yCoord } }];
-  const updatePromises = [];
-  while (queue.length > 0 && allTiles.length > 0) {
-    const poppedTile = queue.shift();
-    const tile = _.find(allTiles, t => ObjectId(t._id).equals(ObjectId(poppedTile._id)));
-    _.remove(allTiles, t => ObjectId(t._id).equals(ObjectId(poppedTile._id)));
-    if (tile) {
-      updatePromises.push(
-        models.Tile.updateOne({ _id: tile._id }, { $set: { coordinates: poppedTile.coordinates } }),
-      );
-      const { x, y } = { x: poppedTile.coordinates.x, y: poppedTile.coordinates.y };
-      queue = _.union(queue, tile.neighbours.map((neighbour, index) => {
-        switch (index) {
-          case DIRECTIONS.UP:
-            return { _id: neighbour, coordinates: { x, y: y - 1 } };
-          case DIRECTIONS.LEFT:
-            return { _id: neighbour, coordinates: { x: x - 1, y } };
-          case DIRECTIONS.DOWN:
-            return { _id: neighbour, coordinates: { x, y: y + 1 } };
-          case DIRECTIONS.RIGHT:
-            return { _id: neighbour, coordinates: { x: x + 1, y } };
-          default:
-            return { _id: null, coordinates: null };
-        }
-      }));
-    }
-  }
-  await Promise.all(updatePromises);
+  await Promise.all(allTiles.map(async (tile) => {
+    // rotates the x and y coordinates
+    const rotateX = orientation in [1, 2] ? Math.abs(tile.coordinates.y - 3) : tile.coordinates.y;
+    const rotateY = orientation in [2, 3] ? Math.abs(tile.coordinates.x - 3) : tile.coordinates.x;
+    // adjusts the coordinates so they are relative to the mazeTile corner coords
+    const adjustedX = rotateX + cornerCoordinates.x;
+    const adjustedY = rotateY + cornerCoordinates.y;
+
+    await models.Tile.updateOne(
+      { _id: ObjectId(tile._id) },
+      { $set: { coordinates: { x: adjustedX, y: adjustedY } } },
+    );
+  }));
 };
 
 const updateAdjacentMazeTiles = async (
@@ -485,21 +470,20 @@ module.exports = {
           break;
       }
 
-      // Set coordinates for tiles
-      await setCoordinates(
-        ObjectId(entryTile.mazeTileID),
-        ObjectId(entryTile._id),
-        coord.x,
-        coord.y,
-        models,
-      );
-
       // update the cornerCoordinates of the nextMazeTile
       const coordSetMazeTile = await setCornerCoordinate(
         ObjectId(gameStateID),
         { x: coord.x, y: coord.y },
         entryTileDir,
         ObjectId(nextMazeTile._id),
+        models,
+      );
+
+      // Set coordinates for tiles
+      await setCoordinates(
+        ObjectId(entryTile.mazeTileID),
+        coordSetMazeTile.cornerCoordinates,
+        orientation,
         models,
       );
 
