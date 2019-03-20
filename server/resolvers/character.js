@@ -120,15 +120,34 @@ const updateTileOrientation = async (gameStateID, nextMazeTileID, orientation, m
   }));
 };
 
-const setCoordinates = async (mazeTileID, cornerCoordinates, orientation, models) => {
-  const allTiles = await models.Tile.find({ mazeTileID }).toArray();
+const setCoordinates = async (nextMazeTileID, cornerCoordinates, orientation, models) => {
+  const allTiles = await models.Tile.find({ mazeTileID: nextMazeTileID }).toArray();
   await Promise.all(allTiles.map(async (tile) => {
     // rotates the x and y coordinates
-    const rotateX = orientation in [1, 2] ? Math.abs(tile.coordinates.y - 3) : tile.coordinates.y;
-    const rotateY = orientation in [2, 3] ? Math.abs(tile.coordinates.x - 3) : tile.coordinates.x;
+    let rotateCoordinates;
+    switch (orientation) {
+      case DIRECTIONS.UP:
+        rotateCoordinates = tile.coordinates;
+        break;
+      case DIRECTIONS.LEFT:
+        rotateCoordinates = { x: tile.coordinates.y, y: Math.abs(tile.coordinates.x - 3) };
+        break;
+      case DIRECTIONS.DOWN:
+        rotateCoordinates = {
+          x: Math.abs(tile.coordinates.x - 3),
+          y: Math.abs(tile.coordinates.y - 3),
+        };
+        break;
+      case DIRECTIONS.RIGHT:
+        rotateCoordinates = { x: Math.abs(tile.coordinates.y - 3), y: tile.coordinates.x };
+        break;
+      default:
+        logger.error('Invalid direction');
+        throw Error('Invalid direction');
+    }
     // adjusts the coordinates so they are relative to the mazeTile corner coords
-    const adjustedX = rotateX + cornerCoordinates.x;
-    const adjustedY = rotateY + cornerCoordinates.y;
+    const adjustedX = rotateCoordinates.x + cornerCoordinates.x;
+    const adjustedY = rotateCoordinates.y + cornerCoordinates.y;
 
     await models.Tile.updateOne(
       { _id: ObjectId(tile._id) },
@@ -283,7 +302,6 @@ module.exports = {
   Mutation: {
     moveCharacter: async (_parent, {
       gameStateID,
-      userID,
       characterColour,
       endTileCoords,
     }, { models }) => {
@@ -481,7 +499,7 @@ module.exports = {
 
       // Set coordinates for tiles
       await setCoordinates(
-        ObjectId(entryTile.mazeTileID),
+        ObjectId(coordSetMazeTile._id),
         coordSetMazeTile.cornerCoordinates,
         orientation,
         models,
@@ -491,7 +509,7 @@ module.exports = {
       await updateAdjacentMazeTiles(
         ObjectId(gameStateID),
         coordSetMazeTile.cornerCoordinates,
-        ObjectId(nextMazeTile._id),
+        ObjectId(coordSetMazeTile._id),
         models,
       );
 
