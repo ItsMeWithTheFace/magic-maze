@@ -125,5 +125,13 @@ module.exports = {
         throw err;
       }
     },
+    deleteGameState: async (_parent, { gameStateID }, { models }) => {
+      const deleteGS = await models.GameState.deleteOne({ _id: ObjectId(gameStateID) });
+      if (deleteGS.deletedCount > 0) {
+        await models.Tile.deleteMany({ gameStateID: ObjectId(gameStateID) });
+        return true;
+      }
+      return false;
+    },
   },
 };
