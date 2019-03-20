@@ -154,43 +154,32 @@ const setCoordinates = async (mazeTileID, tileID, xCoord, yCoord, models) => {
 
 const updateAdjacentMazeTiles = async (
   gameStateID,
-  searchTileID,
-  entryTileID,
+  cornerCoordinates,
   nextMazeTileID,
   models,
 ) => {
-  // update the previous search and current entry tile's neighbours
-  await Promise.all([
-    models.Tile.findOneAndUpdate({
-      _id: searchTileID,
-      gameStateID,
-      neighbours: { $type: 10 },
-    }, {
-      $set: { 'neighbours.$': entryTileID, searched: true },
-    }),
-    models.Tile.findOneAndUpdate({
-      _id: entryTileID,
-      gameStateID,
-      neighbours: { $type: 10 },
-    }, {
-      $set: { 'neighbours.$': searchTileID },
-    }),
-  ]);
+  const updateResults = [];
 
-  // look for current maze tile's search tiles and update their neighbours if they exist
-  // TODO: (Stephen/Rakin) need to check off old search tiles that lead into wall
-  // when a new mazeTile is added, basically a wall blocks a search tile instead
-  // of two search tiles connecting by accident. This is to prevent from using search
-  // tiles that haven't been used but are blocked by walls
-  const searchTiles = await models.Tile.find({
+  // change array to be all 4 tiles where search/entry tiles `should` be
+  const coordsToSearch = [
+    { x: cornerCoordinates.x + 2, y: cornerCoordinates.y },
+    { x: cornerCoordinates.x, y: cornerCoordinates.y + 1 },
+    { x: cornerCoordinates.x + 1, y: cornerCoordinates.y + 3 },
+    { x: cornerCoordinates.x + 3, y: cornerCoordinates.y + 2 },
+  ];
+
+  const tilesToSearch = await models.Tile.find({
     gameStateID,
     mazeTileID: nextMazeTileID,
-    type: SEARCH_TYPE,
-    searched: false,
+    coordinates: { $in: coordsToSearch },
   }).toArray();
 
-  searchTiles.forEach(async (tile) => {
-    const direction = _.findIndex(tile.neighbours, t => t === null);
+  tilesToSearch.forEach(async (tile) => {
+    // use index in coordsToSearch array as the direction
+    const direction = _.findIndex(
+      coordsToSearch,
+      c => (c.x === tile.coordinates.x && c.y === tile.coordinates.y),
+    );
     let coordinatesToFind;
     switch (direction) {
       case DIRECTIONS.UP:
@@ -206,36 +195,63 @@ const updateAdjacentMazeTiles = async (
         coordinatesToFind = { x: tile.coordinates.x + 1, y: tile.coordinates.y };
         break;
       default:
-        throw Error('Search tile is already used');
+        logger.error('Current tile does not exist');
+        throw Error('Current tile does not exist');
     }
 
     // update adjacent tiles if they exist
     const adjTile = await models.Tile.findOne({
       gameStateID,
       coordinates: coordinatesToFind,
-      neighbours: { $type: 10 },
     });
 
     // update current maze tile's tile neighbour with adjacent
     if (adjTile) {
-      await Promise.all([
-        models.Tile.findOneAndUpdate({
-          _id: adjTile._id,
-          gameStateID,
-          neighbours: { $type: 10 },
-        }, {
-          $set: { 'neighbours.$': tile._id, searched: true },
-        }),
-        models.Tile.findOneAndUpdate({
-          _id: tile._id,
-          gameStateID,
-          neighbours: { $type: 10 },
-        }, {
-          $set: { 'neighbours.$': adjTile._id, searched: true },
-        }),
-      ]);
+      // current and adjacent tiles are both search types, or current is an entry type
+      if (adjTile.type === SEARCH_TYPE && (tile.type === SEARCH_TYPE || tile.type === ENTRY_TYPE)) {
+        const updateParams = { 'neighbours.$': adjTile._id };
+        if (tile.type === SEARCH_TYPE) updateParams.searched = true;
+
+        // add if to differentiate entry and search type
+        updateResults.push(
+          models.Tile.findOneAndUpdate({
+            _id: adjTile._id,
+            gameStateID,
+            neighbours: { $type: 10 },
+          }, {
+            $set: { 'neighbours.$': tile._id, searched: true },
+          }),
+          models.Tile.findOneAndUpdate({
+            _id: tile._id,
+            gameStateID,
+            neighbours: { $type: 10 },
+          }, {
+            $set: updateParams,
+          }),
+        );
+      } else {
+        // either current or adjacent tile is a search type and the other is not
+        updateResults.push(
+          models.Tile.findOneAndUpdate({
+            _id: adjTile._id,
+            gameStateID,
+            type: SEARCH_TYPE,
+          }, {
+            $set: { searched: true },
+          }),
+          models.Tile.findOneAndUpdate({
+            _id: tile._id,
+            gameStateID,
+            type: SEARCH_TYPE,
+          }, {
+            $set: { searched: true },
+          }),
+        );
+      }
     }
   });
+
+  await Promise.all(updateResults);
 };
 
 const setCornerCoordinate = async (
@@ -274,28 +290,6 @@ const setCornerCoordinate = async (
   }, { returnOriginal: false });
 
   return _.find(gs.mazeTiles, mt => ObjectId(mt._id).equals(ObjectId(nextMazeTileID)));
-};
-
-const unsetBlockedSearches = async (gameStateID, nextMazeTileID, cornerCoordinates, models) => {
-  const coordinatesToFind = [];
-
-  // all the coordinates just outside this new mazetile
-  for (let i = 0; i < 4; i += 1) {
-    coordinatesToFind.push({ x: cornerCoordinates.x + i, y: cornerCoordinates.y - 1 });
-    coordinatesToFind.push({ x: cornerCoordinates.x + i, y: cornerCoordinates.y + 4 });
-    coordinatesToFind.push({ x: cornerCoordinates.x - 1, y: cornerCoordinates.y + i });
-    coordinatesToFind.push({ x: cornerCoordinates.x + 4, y: cornerCoordinates.y + i });
-  }
-
-  await models.Tile.updateMany({
-    gameStateID,
-    mazeTileID: nextMazeTileID,
-    coordinates: { $in: coordinatesToFind },
-    type: SEARCH_TYPE,
-    searched: false,
-  }, {
-    $set: { searched: true },
-  });
 };
 
 module.exports = {
@@ -500,15 +494,6 @@ module.exports = {
         models,
       );
 
-      // Need to check the edge cases for adjacent mazetiles and update them
-      await updateAdjacentMazeTiles(
-        ObjectId(gameStateID),
-        ObjectId(searchTile._id),
-        ObjectId(entryTile._id),
-        ObjectId(nextMazeTile._id),
-        models,
-      );
-
       // update the cornerCoordinates of the nextMazeTile
       const coordSetMazeTile = await setCornerCoordinate(
         ObjectId(gameStateID),
@@ -518,14 +503,14 @@ module.exports = {
         models,
       );
 
-      await unsetBlockedSearches(
+      // Need to check the edge cases for adjacent mazetiles and update them
+      await updateAdjacentMazeTiles(
         ObjectId(gameStateID),
-        ObjectId(coordSetMazeTile._id),
         coordSetMazeTile.cornerCoordinates,
+        ObjectId(nextMazeTile._id),
         models,
       );
 
-      const gs = await models.GameState.findOne({ _id: ObjectId(gameStateID) });
       return coordSetMazeTile;
     },
   },
