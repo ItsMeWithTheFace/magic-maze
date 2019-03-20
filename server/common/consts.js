@@ -245,7 +245,7 @@ const MAZETILE_10_TILE_NEIGHBOUR_CONFIG = [
   { type: SEARCH_TYPE, neighbours: [-1, null, 8, 5], colour: GREEN, searched: false },
   { type: NORMAL_TYPE, neighbours: [1, 4, 9, 6] },
   { type: NORMAL_TYPE, neighbours: [-1, 5, 10, 7] },
-  { type: VORTEX_TYPE, neighbours: [-1, 6, -1, -1], colour: PURPLE }, // TODO: (Kevin) add right wall to this tile in sprite
+  { type: VORTEX_TYPE, neighbours: [-1, 6, -1, -1], colour: PURPLE },
 
   { type: NORMAL_TYPE, neighbours: [4, -1, 12, -1] },
   { type: TIME_TYPE, neighbours: [5, -1, -1, -1], used: false },
@@ -276,7 +276,7 @@ const MAZETILE_11_TILE_NEIGHBOUR_CONFIG = [
 
   { type: WALL_TYPE, neighbours: [-1, -1, -1, -1] },
   { type: WALL_TYPE, neighbours: [-1, -1, -1, -1] },
-  { type: VORTEX_TYPE, neighbours: [10, -1, -1, -1], colour: RED }, // TODO: (Kevin) add bottom wall to this tile in sprite
+  { type: VORTEX_TYPE, neighbours: [10, -1, -1, -1], colour: RED },
   { type: WALL_TYPE, neighbours: [-1, -1, -1, -1] },
 ];
 
