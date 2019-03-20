@@ -289,7 +289,7 @@ const setCornerCoordinate = async (
     },
   }, { returnOriginal: false });
 
-  return _.find(gs.mazeTiles, mt => ObjectId(mt._id).equals(ObjectId(nextMazeTileID)));
+  return _.find(gs.value.mazeTiles, mt => ObjectId(mt._id).equals(ObjectId(nextMazeTileID)));
 };
 
 module.exports = {
