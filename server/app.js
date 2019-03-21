@@ -18,15 +18,23 @@ const ws = createServer(app);
 
 app.use(morgan('combined', { stream: { write: (message) => { logger.info(message); } } }));
 app.use(cors({
-  origin: '*',
+  origin: 'http://localhost:3000',
   optionsSuccessStatus: 200,
 }));
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: {
-    models,
+  context: ({ req }) => {
+    const token = req.headers.authorization || '';
+
+    // const user = getUser(token);
+    // if (!user) throw Error('You must be logged in to use the API');
+
+    return {
+      // users,
+      models,
+    };
   },
   subscriptions: {
     path: '/server/graphql',
