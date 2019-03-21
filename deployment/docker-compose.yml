@@ -5,11 +5,15 @@ services:
     ports:
       - "5000:5000"
       - "3000:3000"
+    volumes:
+      - ../client:/usr/src/app
   api:
     build: ../server/
     env_file:
       - server_variables.env
     ports:
       - "8000:8000"
+    volumes:
+      - ../server:/usr/src/app
   redis:
     image: "redis:alpine"
