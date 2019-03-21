@@ -8,8 +8,7 @@ COPY "resolvers/" "/usr/src/app/resolvers/"
 COPY "models/" "/usr/src/app/models/"
 COPY "common/" "/usr/src/app/common/"
 
-RUN npm install --only=production
+RUN npm install \
+  && npm install -g nodemon
 
-EXPOSE 8000
-
-CMD [ "npm", "start" ]
+CMD [ "nodemon", "app.js" ]

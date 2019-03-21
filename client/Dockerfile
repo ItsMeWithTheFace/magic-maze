@@ -10,6 +10,4 @@ RUN npm install \
   && npm run build \
   && npm install -g serve
 
-EXPOSE 5000
-
-CMD [ "serve", "-s", "-l", "5000", "build" ]
+CMD [ "npm", "start" ]
