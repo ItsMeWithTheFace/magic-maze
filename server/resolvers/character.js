@@ -160,6 +160,7 @@ const updateAdjacentMazeTiles = async (
   gameStateID,
   cornerCoordinates,
   nextMazeTileID,
+  usedMazeTiles,
   models,
 ) => {
   const updateResults = [];
@@ -206,6 +207,7 @@ const updateAdjacentMazeTiles = async (
     // update adjacent tiles if they exist
     const adjTile = await models.Tile.findOne({
       gameStateID,
+      mazeTileID: { $in: usedMazeTiles },
       coordinates: coordinatesToFind,
     });
 
@@ -327,12 +329,19 @@ module.exports = {
       const gameState = await models.GameState.findOne({ _id: ObjectId(gameStateID) });
       const character = _.find(gameState.characters, char => char.colour === characterColour);
 
+      const usedMazeTiles = _.reduce(gameState.mazeTiles, (array, mt) => {
+        if (mt.cornerCoordinates) array.push(ObjectId(mt._id));
+        return array;
+      }, []);
+
       const startTile = await models.Tile.findOne({
         gameStateID: ObjectId(gameStateID),
+        mazeTileID: { $in: usedMazeTiles },
         coordinates: character.coordinates,
       });
       const endTile = await models.Tile.findOne({
         gameStateID: ObjectId(gameStateID),
+        mazeTileID: { $in: usedMazeTiles },
         coordinates: endTileCoords,
       });
 
@@ -447,6 +456,10 @@ module.exports = {
 
       if (!searchTile || nextMazeTile === undefined) throw Error('Search tile or next maze tile doesn\'t exist');
 
+      const usedMazeTiles = _.reduce(gameState.mazeTiles, (array, mt) => {
+        if (mt.cornerCoordinates) array.push(ObjectId(mt._id));
+        return array;
+      }, []);
       const searchTileDir = _.findIndex(searchTile.neighbours, neighbour => neighbour === null);
 
       const entryTile = await models.Tile.findOne({
@@ -510,6 +523,7 @@ module.exports = {
         ObjectId(gameStateID),
         coordSetMazeTile.cornerCoordinates,
         ObjectId(coordSetMazeTile._id),
+        usedMazeTiles,
         models,
       );
 
