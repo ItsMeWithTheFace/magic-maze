@@ -522,8 +522,7 @@ module.exports = {
       await updateAdjacentMazeTiles(
         ObjectId(gameStateID),
         coordSetMazeTile.cornerCoordinates,
-        ObjectId(coordSetMazeTile._id),
-        usedMazeTiles,
+        ObjectId(nextMazeTile._id),
         models,
       );
 
