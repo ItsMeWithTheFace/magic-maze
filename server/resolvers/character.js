@@ -13,6 +13,8 @@ const {
   ITEM_TYPE,
   ENTRY_TYPE,
   EXIT_TYPE,
+  TIME_TYPE,
+  TIME,
 } = require('../common/consts');
 
 const vortexMovement = (gameState, startTile, endTile, character) => (
@@ -81,6 +83,29 @@ const checkCharactersOnTile = async (gameState, tileType, models) => {
       });
     }
   }
+};
+
+const updateEndTime = async (gameStateID, endTileID, models) => {
+  await Promise.all([
+    models.GameState.updateOne({
+      _id: gameStateID,
+    },
+    {
+      $set: {
+        endTime: new Date(new Date().getTime() + TIME),
+      },
+    }),
+    models.Tile.updateOne({
+      _id: endTileID,
+      gameStateID,
+      used: false,
+    },
+    {
+      $set: {
+        used: true,
+      },
+    }),
+  ]);
 };
 
 const updateItemClaimed = async (gameStateID, endTile, characterColour, models) => {
@@ -381,7 +406,9 @@ module.exports = {
       }
 
       if (movedStraightLine) {
-        if (endTile.type === ITEM_TYPE && !gameState.allItemsClaimed) {
+        if (endTile.type === TIME_TYPE && !endTile.used) {
+          await updateEndTime(ObjectId(gameStateID), ObjectId(endTile._id), models);
+        } else if (endTile.type === ITEM_TYPE && !gameState.allItemsClaimed) {
           await updateItemClaimed(ObjectId(gameStateID), endTile, character.colour, models);
           await checkCharactersOnTile(gameState, ITEM_TYPE, models);
         } else if (endTile.type === EXIT_TYPE
