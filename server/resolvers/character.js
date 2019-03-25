@@ -329,6 +329,7 @@ module.exports = {
   Mutation: {
     moveCharacter: async (_parent, {
       gameStateID,
+      userID,
       characterColour,
       endTileCoords,
     }, { models }) => {
@@ -419,28 +420,25 @@ module.exports = {
         }
       }
 
-      let updatedCharacter;
-      if (shouldMove) {
-        // update character
-        const { coordinates } = endTile;
-        // update to db
-        updatedCharacter = await models.GameState.findOneAndUpdate({
-          _id: ObjectId(gameStateID),
-          'characters.colour': characterColour,
+      const { coordinates } = shouldMove ? endTile : startTile;
+      // update to db
+      const updatedGameState = await models.GameState.findOneAndUpdate({
+        _id: ObjectId(gameStateID),
+        'characters.colour': characterColour,
+      },
+      {
+        $set: {
+          'characters.$.coordinates': coordinates,
+          'characters.$.locked': null,
         },
-        {
-          $set: {
-            'characters.$.coordinates': coordinates,
-          },
-        },
-        { returnOriginal: false });
-      }
-      return updatedCharacter
-        ? _.find(updatedCharacter.value.characters, char => char.colour === characterColour)
-        : character;
+      },
+      { returnOriginal: false });
+
+      return updatedGameState.value;
     },
     searchAction: async (_parent, {
       gameStateID,
+      userID,
       characterCoords,
     }, { models }) => {
       /**
@@ -553,8 +551,38 @@ module.exports = {
         usedMazeTiles,
         models,
       );
+      const updatedGameState = await models.GameState.findOneAndUpdate({
+        _id: ObjectId(gameStateID),
+        'characters.colour': character.colour,
+      },
+      {
+        $set: {
+          'characters.$.locked': null,
+        },
+      },
+      { returnOriginal: false });
 
-      return coordSetMazeTile;
+      return updatedGameState.value;
+    },
+    lockCharacter: async (_parent, {
+      gameStateID,
+      userID,
+      characterColour,
+    }, { models }) => {
+      const updatedGameState = await models.GameState.findOneAndUpdate({
+        _id: ObjectId(gameStateID),
+        'characters.colour': characterColour,
+        'characters.locked': { $type: 10 },
+      },
+      {
+        $set: {
+          'characters.$.locked': ObjectId(userID),
+        },
+      },
+      { returnOriginal: false });
+      console.log(updatedGameState);
+
+      return updatedGameState.value;
     },
   },
 };

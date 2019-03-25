@@ -23,14 +23,14 @@ const mutations = gql`
     # Tile
   
     # Character
-    lockCharacter(gameStateID: ID!, colour: String!, userID: ID!): GameState!
+    lockCharacter(gameStateID: ID!, userID: ID!, characterColour: String!): GameState!
     moveCharacter(
       gameStateID: ID!,
       userID: ID,
       characterColour: String!,
       endTileCoords: CoordinatesInput!,
-    ): Character!
-    searchAction(gameStateID: ID!, characterCoords: CoordinatesInput!): MazeTile!
+    ): GameState!
+    searchAction(gameStateID: ID!, userID: ID, characterCoords: CoordinatesInput!): GameState!
   }
 `;
 
