@@ -1,17 +1,11 @@
-const jwt = require('express-jwt');
-const jwtAuthz = require('express-jwt-authz');
-const jwksRsa = require('jwks-rsa');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 
-const checkJwt = jwt({
-  secret: jwksRsa.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 5,
-    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
-  }),
+const { User } = require('../models/user');
 
-  // Validate the audience and the issuer.
-  audience: process.env.AUTH0_AUDIENCE,
-  issuer: `https://${process.env.AUTH0_DOMAIN}/`,
-  algorithms: ['RS256'],
-});
+passport.use(new LocalStrategy({
+  usernameField: 'user[username]',
+  passwordField: 'user[password]',
+}, async (username, password, done) => {
+  // TODO
+}));
