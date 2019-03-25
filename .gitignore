@@ -24,3 +24,4 @@ yarn-error.log*
 .env
 server/deleteDB.txt
 deployment/server_variables.env
+deployment/client_variables.env
