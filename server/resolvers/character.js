@@ -434,7 +434,7 @@ module.exports = {
       },
       { returnOriginal: false });
 
-      return updatedGameState.value;
+      return _.find(updatedGameState.value.characters, char => char.colour === characterColour);
     },
     searchAction: async (_parent, {
       gameStateID,
@@ -562,7 +562,8 @@ module.exports = {
       },
       { returnOriginal: false });
 
-      return updatedGameState.value;
+      return _.find(updatedGameState.value.mazeTiles,
+        mt => ObjectId(mt._id).equals(nextMazeTile._id));
     },
     lockCharacter: async (_parent, {
       gameStateID,
@@ -580,9 +581,8 @@ module.exports = {
         },
       },
       { returnOriginal: false });
-      console.log(updatedGameState);
 
-      return updatedGameState.value;
+      return _.find(updatedGameState.value.characters, char => char.colour === characterColour);
     },
   },
 };
