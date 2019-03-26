@@ -38,7 +38,7 @@ const subscriptions = gql`
   type Subscription {
     # GameState
     endTimeUpdated(gameStateID: ID!): Date!
-    gameEnded(gameStateID: ID!): Boolean!
+    endGame(gameStateID: ID!): Boolean!
 
     # MazeTile
     mazeTileAdded(gameStateID: ID!): MazeTile!
