@@ -9,6 +9,7 @@ import client from '../common/utils';
 import spritesheet from '../assets/spritesheet.png';
 import Timer from './Timer';
 import './Board.css';
+import { ENDTIME_QUERY } from '../common/queries';
 
 // constants
 const SCALE = 4;
@@ -16,7 +17,7 @@ const TILE_SIZE = 16;
 const MAZE_SIZE = 64;
 const X_OFFSET = 350;
 const Y_OFFSET = 80;
-const GAME_ID = '5c9bf695806da05a05b53acd';
+const GAME_ID = '5c9c02a162145af40aba8d8d';
 
 // fontawesome
 library.add(faSearch);
@@ -92,13 +93,10 @@ class Board extends Component {
     .add(spriteList)
     .load(this.setup);
 
-    const endTimeQuery = gql`
-    subscription {
-     	endTimeUpdated(gameStateID: "5c9a99fe78ce17e4d91c171c")
-    }
-    `
-
-    client().subscribe({ query: , variables: { gameStateID: GAME_ID } })
+    client().subscribe({ query: ENDTIME_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
+      .forEach(time => {
+        this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) });
+      });
   }
 
   /**
