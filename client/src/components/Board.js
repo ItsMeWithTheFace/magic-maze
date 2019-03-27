@@ -18,295 +18,326 @@ const X_OFFSET = 350;
 const Y_OFFSET = 80;
 const GAME_ID = '5c91366aec8edc30451f89e3';
 
-// containers
-// (this is used for layering)
-const characterContainer = new PIXI.Container();
-const mazeContainer = new PIXI.Container();
-const artifactContainer = new PIXI.Container();
-
-// character objects
-let selected = '';
-const players = [];
-let selector;
-
 // fontawesome
 library.add(faSearch);
 
-/**
- * load all the maze tiles
- * traverses file and maps all the images
- * @param {*} r regex
- */
-function importAll(r) {
-  return r.keys().map(r);
-}
-const images = importAll(require.context('../assets/maze/', false, /\.(png|jpe?g|svg)$/));
+// PIXI elements
+let app;
+let viewport;
 
-// create board
-const app = new PIXI.Application({
-  width: window.innerWidth,
-  height: window.innerHeight,
-});
-app.renderer.backgroundColor = 0x334D5C;
-// set the scale mode (makes it so the pixels aren't blurry when scaling)
-PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+// maze tile sprites
+const spriteList = [
+  { url: spritesheet },
+  { url: require('../assets/maze/0.png') },
+  { url: require('../assets/maze/1.png') },
+  { url: require('../assets/maze/2.png') },
+  { url: require('../assets/maze/3.png') },
+  { url: require('../assets/maze/4.png') },
+  { url: require('../assets/maze/5.png') },
+  { url: require('../assets/maze/6.png') },
+  { url: require('../assets/maze/7.png') },
+  { url: require('../assets/maze/8.png') },
+  { url: require('../assets/maze/9.png') },
+  { url: require('../assets/maze/10.png') },
+  { url: require('../assets/maze/11.png') },
+];
 
-/**
- * move the selected character based on selected option
- * move algorithm:/
- * - calculate the delta between the click and the character's position
- * - convert delta to the number of tile spaces to increase this by
- *     (i.e. this should return the number of tiles moved; integer between 0 and n)
- * - scale up the coordinate to the actual coordinate
- * @param {*} e click event
- */
-function move(e) {
-  if (selected) {
-    const endX = players[selected].x + Math.floor((e.world.x - players[selected].x)
-     / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-    const endY = players[selected].y + Math.floor((e.world.y - players[selected].y)
-     / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-
-    const deltaX = (endX - X_OFFSET) / (TILE_SIZE * SCALE);
-    const deltaY = (endY - Y_OFFSET) / (TILE_SIZE * SCALE);
-    const mutation = gql`
-      mutation {
-        moveCharacter(
-          gameStateID: "${GAME_ID}",
-          userID: null,
-          characterColour: "${selected}",
-          endTileCoords:{ x: ${deltaX}, y: ${deltaY} },
-        ) {
-          _id
-          colour
-          coordinates {
-            x
-            y
-          }
-        }
-      }
-    `;
-    client().mutate({ mutation }).then((results) => {
-      players[selected].x = results.data.moveCharacter.coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
-      players[selected].y = results.data.moveCharacter.coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
-      selector.x = players[selected].x;
-      selector.y = players[selected].y;
-    });
-  }
-}
-
-// create viewport
-const viewport = new Viewport({
-  screenWidth: window.innerWidth,
-  screenHeight: window.innerHeight,
-  interaction: app.renderer.plugins.interaction,
-});
-// add and setup the viewport to the stage
-// this must be done before adding any sprites
-app.stage.addChild(viewport);
-viewport
-  .drag()
-  .pinch()
-  .wheel()
-  .decelerate()
-  .on('clicked', move);
-
-/**
- * create a new character
- * @param {*} offset offset value in the spritesheet (hard-coded)
- * @param {*} data the character JSON
- */
-function createCharacter(offset, data) {
-  const texture = new PIXI.Texture(
-    PIXI.utils.TextureCache[spritesheet],
-    new PIXI.Rectangle(offset * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE),
-  );
-  const character = new PIXI.Sprite(texture);
-  character.x = data.coordinates.x * (TILE_SIZE * SCALE) + X_OFFSET;
-  character.y = data.coordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET;
-  character.scale.set(SCALE, SCALE);
-  character.interactive = true;
-  // sprite handling can only be caught using 'click'
-  // (this is different from the viewport for some reason...)
-  character.on('click', () => {
-    // initialize selector sprite
-    const selectorTexture = new PIXI.Texture(
-      PIXI.utils.TextureCache[spritesheet],
-      new PIXI.Rectangle(5 * TILE_SIZE, 4 * TILE_SIZE, TILE_SIZE, TILE_SIZE),
-    );
-    selector = new PIXI.Sprite(selectorTexture);
-    selector.x = character.x;
-    selector.y = character.y;
-    selector.scale.set(SCALE, SCALE);
-
-    // if there is nothing selected
-    if (selected === '') {
-      // add the selector icon
-      artifactContainer.addChild(selector);
-      viewport.addChild(artifactContainer);
-    // if swapping selected character
-    } else if (selected !== data.colour) {
-      // remove all selectors
-      for (let i = 0; i < artifactContainer.children.length; i += 1) {
-        artifactContainer.removeChildAt(i);
-      }
-      // add the new selector
-      artifactContainer.addChild(selector);
-      viewport.addChild(artifactContainer);
-    } else {
-      // remove all selectors
-      for (let i = 0; i < artifactContainer.children.length; i += 1) {
-        artifactContainer.removeChildAt(i);
-      }
-    }
-    // set selected character
-    // NOTE: may need to adjust the logic game logic for freeing selected characters
-    selected = selected === '' || selected !== data.colour ? data.colour : '';
-  });
-  return character;
-}
-
-/**
- * call backend and do initial setup
- */
-const setup = () => {
-  const query = gql`
-    {
-      gameState(gameStateID: "${GAME_ID}") {
-        mazeTiles {
-          cornerCoordinates {
-            x
-            y
-          }
-          spriteID
-          orientation
-        }
-        characters {
-          colour
-          coordinates {
-            x
-            y
-          }
-        }
-      }
-    }
-  `;
-  client().query({ query }).then((results) => {
-    // render and create characters
-    players.red = createCharacter(3, results.data.gameState.characters.find(x => x.colour === 'red'));
-    players.purple = createCharacter(0, results.data.gameState.characters.find(x => x.colour === 'purple'));
-    players.blue = createCharacter(1, results.data.gameState.characters.find(x => x.colour === 'blue'));
-    players.green = createCharacter(2, results.data.gameState.characters.find(x => x.colour === 'green'));
-
-    // render initial maze tile
-    // TODO: perhaps abstract this into a separate function
-    const startTileTexture = new PIXI.Texture(
-      PIXI.utils.TextureCache[images[0]],
-      new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
-    );
-    const startTile = new PIXI.Sprite(startTileTexture);
-    startTile.x = X_OFFSET;
-    startTile.y = Y_OFFSET;
-    startTile.scale.set(SCALE, SCALE);
-
-    // render pre-existing maze tiles
-    const tiles = results.data.gameState.mazeTiles.filter(x => x.cornerCoordinates !== null);
-    tiles.forEach((tile) => {
-      const texture = new PIXI.Texture(
-        PIXI.utils.TextureCache[require(`../assets/maze/${tile.spriteID}.png`)],
-        new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
-      );
-      const newTile = new PIXI.Sprite(texture);
-      newTile.x = tile.cornerCoordinates.x * (TILE_SIZE * SCALE) + X_OFFSET + (MAZE_SIZE / 2) * 4;
-      newTile.y = tile.cornerCoordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET + (MAZE_SIZE / 2) * 4;
-      newTile.pivot.set(MAZE_SIZE / 2);
-      newTile.scale.set(SCALE, SCALE);
-      newTile.angle = tile.orientation * (-90);
-      mazeContainer.addChild(newTile);
-    });
-
-    // add actors to containers
-    // (we do this to manipulate the z-index properly)
-    mazeContainer.addChild(startTile);
-    characterContainer.addChild(players.red);
-    characterContainer.addChild(players.purple);
-    characterContainer.addChild(players.blue);
-    characterContainer.addChild(players.green);
-
-    // add containers to viewport
-    // (cannot add to stage otherwise scrolling will not work)
-    viewport.addChild(mazeContainer);
-    viewport.addChild(characterContainer);
-  });
-};
-
-// load sprites
-const spriteList = [{ url: spritesheet }];
-// we read all the images in the beginning
-// then add them all to this object to get the loader to load everything
-images.forEach((url) => {
-  spriteList.push(url);
-});
-PIXI.Loader.shared
-  .add(spriteList)
-  .load(setup);
-
-/**
- * search for a new maze tile upon encountering a search tile
- */
-function search() {
-  if (selected) {
-    const x = (players[selected].x - X_OFFSET) / (TILE_SIZE * SCALE);
-    const y = (players[selected].y - Y_OFFSET) / (TILE_SIZE * SCALE);
-    const mutation = gql`
-      mutation{
-        searchAction (
-          gameStateID: "${GAME_ID}",
-          characterCoords: { x: ${x}, y: ${y} },
-        ) {
-          spriteID
-          orientation
-          cornerCoordinates {
-            x
-            y
-          }
-        }
-      }
-    `;
-    client().mutate({ mutation }).then((results) => {
-      const newTileTexture = new PIXI.Texture(
-        PIXI.utils.TextureCache[require(`../assets/maze/${results.data.searchAction.spriteID}.png`)],
-        new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
-      );
-      const newTile = new PIXI.Sprite(newTileTexture);
-      // adding a pivot affects the position of the tile
-      // must offset by (WIDTH / 2) * SCALE to counteract this
-      newTile.x = results.data.searchAction.cornerCoordinates.x * (TILE_SIZE * SCALE) + X_OFFSET
-       + (MAZE_SIZE / 2) * 4;
-      newTile.y = results.data.searchAction.cornerCoordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET
-       + (MAZE_SIZE / 2) * 4;
-      // add pivot in the centre of the tile
-      newTile.pivot.set(MAZE_SIZE / 2);
-      newTile.scale.set(SCALE, SCALE);
-      // start tiles are rotated counterclockwise for god knows why
-      newTile.angle = results.data.searchAction.orientation * (-90);
-      mazeContainer.addChild(newTile);
-    });
-  }
-}
+let characterContainer;
+let mazeContainer;
+let artifactContainer;
 
 class Board extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      // character objects
+      selected: '',
+      players: [],
+      selector: null,
+      // end time (for timer)
+      gameEndTime: new Date(),
+    };
+
+    viewport = new Viewport({
+      screenWidth: window.innerWidth,
+      screenHeight: window.innerHeight,
+    });
+
+    app = new PIXI.Application({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+    app.renderer.backgroundColor = 0x334D5C;
+    app.stage.addChild(viewport);
+    viewport
+      .drag()
+      .pinch()
+      .wheel()
+      .decelerate()
+      .on('clicked', this.move);
+
+    // set scale mode (so pixels aren't blurry when scaling)
+    PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+
+    characterContainer = new PIXI.Container();
+    mazeContainer = new PIXI.Container();
+    artifactContainer = new PIXI.Container();
+  }
+
   // serve board
   componentDidMount() {
     document.getElementById('board').appendChild(app.view);
     document.body.style.overflow = 'hidden';
+    PIXI.Loader.shared
+    .add(spriteList)
+    .load(this.setup);
+  }
+
+  /**
+   * move the selected character based on selected option
+   * move algorithm:/
+   * - calculate the delta between the click and the character's position
+   * - convert delta to the number of tile spaces to increase this by
+   *     (i.e. this should return the number of tiles moved; integer between 0 and n)
+   * - scale up the coordinate to the actual coordinate
+   * @param {*} e click event
+   */
+  move = (e) => {
+    const { selected, players, selector } = this.state;
+    if (selected) {
+      const endX = players[selected].x + Math.floor((e.world.x - players[selected].x)
+      / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+      const endY = players[selected].y + Math.floor((e.world.y - players[selected].y)
+      / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+
+      const deltaX = (endX - X_OFFSET) / (TILE_SIZE * SCALE);
+      const deltaY = (endY - Y_OFFSET) / (TILE_SIZE * SCALE);
+      const mutation = gql`
+        mutation {
+          moveCharacter(
+            gameStateID: "${GAME_ID}",
+            userID: null,
+            characterColour: "${selected}",
+            endTileCoords:{ x: ${deltaX}, y: ${deltaY} },
+          ) {
+            _id
+            colour
+            coordinates {
+              x
+              y
+            }
+          }
+        }
+      `;
+      client().mutate({ mutation }).then((results) => {
+        players[selected].x = results.data.moveCharacter.coordinates.x * TILE_SIZE
+          * SCALE + X_OFFSET;
+        players[selected].y = results.data.moveCharacter.coordinates.y * TILE_SIZE
+          * SCALE + Y_OFFSET;
+        selector.x = players[selected].x;
+        selector.y = players[selected].y;
+      });
+    }
+  }
+
+  /**
+   * call backend and do initial setup
+   */
+  setup = () => {
+    const {
+      gameEndTime,
+      players,
+    } = this.state;
+    const query = gql`
+      {
+        gameState(gameStateID: "${GAME_ID}") {
+          mazeTiles {
+            cornerCoordinates {
+              x
+              y
+            }
+            spriteID
+            orientation
+          }
+          endTime
+          characters {
+            colour
+            coordinates {
+              x
+              y
+            }
+          }
+        }
+      }
+    `;
+    client().query({ query }).then((results) => {
+      this.setState({
+        gameEndTime: new Date(results.data.gameState.endTime),
+      });
+
+      // render and create characters
+      players.red = this.createCharacter(3, results.data.gameState.characters.find(x => x.colour === 'red'));
+      players.purple = this.createCharacter(0, results.data.gameState.characters.find(x => x.colour === 'purple'));
+      players.blue = this.createCharacter(1, results.data.gameState.characters.find(x => x.colour === 'blue'));
+      players.green = this.createCharacter(2, results.data.gameState.characters.find(x => x.colour === 'green'));
+
+      // render initial maze tile
+      const startTileTexture = new PIXI.Texture(
+        PIXI.utils.TextureCache[require('../assets/maze/0.png')],
+        new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
+      );
+      const startTile = new PIXI.Sprite(startTileTexture);
+      startTile.x = X_OFFSET;
+      startTile.y = Y_OFFSET;
+      startTile.scale.set(SCALE, SCALE);
+
+      // render pre-existing maze tiles
+      const tiles = results.data.gameState.mazeTiles.filter(x => x.cornerCoordinates !== null);
+      tiles.forEach((tile) => {
+        const texture = new PIXI.Texture(
+          PIXI.utils.TextureCache[require(`../assets/maze/${tile.spriteID}.png`)],
+          new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
+        );
+        const newTile = new PIXI.Sprite(texture);
+        newTile.x = tile.cornerCoordinates.x * (TILE_SIZE * SCALE) + X_OFFSET + (MAZE_SIZE / 2) * 4;
+        newTile.y = tile.cornerCoordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET + (MAZE_SIZE / 2) * 4;
+        newTile.pivot.set(MAZE_SIZE / 2);
+        newTile.scale.set(SCALE, SCALE);
+        newTile.angle = tile.orientation * (-90);
+        mazeContainer.addChild(newTile);
+      });
+
+      // add actors to containers
+      // (we do this to manipulate the z-index properly)
+      mazeContainer.addChild(startTile);
+      characterContainer.addChild(players.red);
+      characterContainer.addChild(players.purple);
+      characterContainer.addChild(players.blue);
+      characterContainer.addChild(players.green);
+
+      // add containers to viewport
+      // (cannot add to stage otherwise scrolling will not work)
+      viewport.addChild(mazeContainer);
+      viewport.addChild(characterContainer);
+    });
+  }
+
+  /**
+   * create a new character
+   * @param {*} offset offset value in the spritesheet (hard-coded)
+   * @param {*} data the character JSON
+   */
+  createCharacter = (offset, data) => {
+    const {
+      selected,
+    } = this.state;
+
+    const texture = new PIXI.Texture(
+      PIXI.utils.TextureCache[spritesheet],
+      new PIXI.Rectangle(offset * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE),
+    );
+    const character = new PIXI.Sprite(texture);
+    character.x = data.coordinates.x * (TILE_SIZE * SCALE) + X_OFFSET;
+    character.y = data.coordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET;
+    character.scale.set(SCALE, SCALE);
+    character.interactive = true;
+    // sprite handling can only be caught using 'click'
+    // (this is different from the viewport for some reason...)
+    character.on('click', () => {
+      // initialize selector sprite
+      const selectorTexture = new PIXI.Texture(
+        PIXI.utils.TextureCache[spritesheet],
+        new PIXI.Rectangle(5 * TILE_SIZE, 4 * TILE_SIZE, TILE_SIZE, TILE_SIZE),
+      );
+      const selectorObject = new PIXI.Sprite(selectorTexture);
+      selectorObject.x = character.x;
+      selectorObject.y = character.y;
+      selectorObject.scale.set(SCALE, SCALE);
+      this.setState({
+        selector: selectorObject,
+      });
+
+      // if there is nothing selected
+      if (selected === '') {
+        // add the selector icon
+        artifactContainer.addChild(selectorObject);
+        viewport.addChild(artifactContainer);
+      // if swapping selected character
+      } else if (selected !== data.colour) {
+        // remove all selectors
+        for (let i = 0; i < artifactContainer.children.length; i += 1) {
+          artifactContainer.removeChildAt(i);
+        }
+        // add the new selector
+        artifactContainer.addChild(selectorObject);
+        viewport.addChild(artifactContainer);
+      } else {
+        // remove all selectors
+        for (let i = 0; i < artifactContainer.children.length; i += 1) {
+          artifactContainer.removeChildAt(i);
+        }
+      }
+
+      // set selected character
+      // NOTE: may need to adjust the logic game logic for freeing selected characters
+      this.setState({
+        selected: selected === '' || selected !== data.colour ? data.colour : '',
+      });
+    });
+    return character;
+  };
+
+  /**
+   * search for a new maze tile upon encountering a search tile
+   */
+  search = () => {
+    const { selected, players, mazeContainer } = this.state;
+
+    if (selected) {
+      const x = (players[selected].x - X_OFFSET) / (TILE_SIZE * SCALE);
+      const y = (players[selected].y - Y_OFFSET) / (TILE_SIZE * SCALE);
+      const mutation = gql`
+        mutation{
+          searchAction (
+            gameStateID: "${GAME_ID}",
+            characterCoords: { x: ${x}, y: ${y} },
+          ) {
+            spriteID
+            orientation
+            cornerCoordinates {
+              x
+              y
+            }
+          }
+        }
+      `;
+      client().mutate({ mutation }).then((results) => {
+        const newTileTexture = new PIXI.Texture(
+          PIXI.utils.TextureCache[require(`../assets/maze/${results.data.searchAction.spriteID}.png`)],
+          new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
+        );
+        const newTile = new PIXI.Sprite(newTileTexture);
+        // adding a pivot affects the position of the tile
+        // must offset by (WIDTH / 2) * SCALE to counteract this
+        newTile.x = results.data.searchAction.cornerCoordinates.x * (TILE_SIZE * SCALE) + X_OFFSET
+        + (MAZE_SIZE / 2) * 4;
+        newTile.y = results.data.searchAction.cornerCoordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET
+        + (MAZE_SIZE / 2) * 4;
+        // add pivot in the centre of the tile
+        newTile.pivot.set(MAZE_SIZE / 2);
+        newTile.scale.set(SCALE, SCALE);
+        // start tiles are rotated counterclockwise for god knows why
+        newTile.angle = results.data.searchAction.orientation * (-90);
+        mazeContainer.addChild(newTile);
+      });
+    }
   }
 
   render() {
+    console.log(this.state.gameEndTime);
     return (
       <div>
-        {/* <div className="timer">3:00</div> */}
-        <Timer />
+        <Timer endTime={this.state.gameEndTime} />
         <div className="sidenav">
           <div className="player">kev</div>
           <div className="player">rakin</div>
@@ -315,7 +346,7 @@ class Board extends Component {
           <button className="btn btn-lg btn-warning" type="button">
             test
           </button>
-          <button className="btn btn-lg btn-primary" type="button" onClick={() => search()}>
+          <button className="btn btn-lg btn-primary" type="button" onClick={() => this.search()}>
             <FontAwesomeIcon icon="search" />
           </button>
         </div>
