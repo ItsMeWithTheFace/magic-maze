@@ -32,11 +32,12 @@ class Timer extends Component {
   render() {
     const { endTime } = this.props;
     const delta = new Date(endTime - this.state.now.getTime());
-    const seconds = delta.getSeconds();
+    const minutes = delta > 0 ? delta.getMinutes() : 0;
+    const seconds = delta > 0 ? delta.getSeconds() : 0;
     return (
       <div>
         <div className="timer">
-          { delta.getMinutes() }
+          { minutes }
           :
           { (seconds < 10) ? '0' + seconds : seconds }
         </div>

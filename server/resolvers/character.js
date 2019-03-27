@@ -593,11 +593,12 @@ module.exports = {
       const updatedGameState = await models.GameState.findOneAndUpdate({
         _id: ObjectId(gameStateID),
         'characters.colour': characterColour,
-        'characters.locked': { $type: 10 },
       },
       {
         $set: {
-          'characters.$.locked': ObjectId(userID),
+          'characters.$.locked': {
+            $cond: { if: { $type: 10 }, then: ObjectId(userID), else: { $type: 10 } },
+          },
         },
       },
       { returnOriginal: false });

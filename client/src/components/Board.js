@@ -16,7 +16,7 @@ const TILE_SIZE = 16;
 const MAZE_SIZE = 64;
 const X_OFFSET = 350;
 const Y_OFFSET = 80;
-const GAME_ID = '5c91366aec8edc30451f89e3';
+const GAME_ID = '5c9bf695806da05a05b53acd';
 
 // fontawesome
 library.add(faSearch);
@@ -91,6 +91,14 @@ class Board extends Component {
     PIXI.Loader.shared
     .add(spriteList)
     .load(this.setup);
+
+    const endTimeQuery = gql`
+    subscription {
+     	endTimeUpdated(gameStateID: "5c9a99fe78ce17e4d91c171c")
+    }
+    `
+
+    client().subscribe({ query: , variables: { gameStateID: GAME_ID } })
   }
 
   /**
@@ -145,7 +153,6 @@ class Board extends Component {
    */
   setup = () => {
     const {
-      gameEndTime,
       players,
     } = this.state;
     const query = gql`
@@ -291,7 +298,7 @@ class Board extends Component {
    * search for a new maze tile upon encountering a search tile
    */
   search = () => {
-    const { selected, players, mazeContainer } = this.state;
+    const { selected, players } = this.state;
 
     if (selected) {
       const x = (players[selected].x - X_OFFSET) / (TILE_SIZE * SCALE);
@@ -334,100 +341,15 @@ class Board extends Component {
   }
 
   render() {
-    console.log(this.state.gameEndTime);
     return (
       <div>
-        <Timer endTime={this.state.gameEndTime} />
+        {/* <Timer endTime={this.state.gameEndTime} /> */}
+        <Timer endTime={new Date(new Date().getTime() + 3 * 60000)} />
         <div className="sidenav">
           <div className="player">kev</div>
           <div className="player">rakin</div>
           <div className="player">luc</div>
           <div className="player">not-luc</div>
-          <button className="btn btn-lg btn-warning" type="button">
-            test
-          </button>
-          <button className="btn btn-lg btn-primary" type="button" onClick={() => this.search()}>
-        for (let i = 0; i < artifactContainer.children.length; i += 1) {
-          artifactContainer.removeChildAt(i);
-        }
-        // add the new selector
-        artifactContainer.addChild(selectorObject);
-        viewport.addChild(artifactContainer);
-      } else {
-        // remove all selectors
-        for (let i = 0; i < artifactContainer.children.length; i += 1) {
-          artifactContainer.removeChildAt(i);
-        }
-      }
-
-      // set selected character
-      // NOTE: may need to adjust the logic game logic for freeing selected characters
-      this.setState({
-        selected: selected === '' || selected !== data.colour ? data.colour : '',
-      });
-    });
-    return character;
-  };
-
-  /**
-   * search for a new maze tile upon encountering a search tile
-   */
-  search = () => {
-    const { selected, players, mazeContainer } = this.state;
-
-    if (selected) {
-      const x = (players[selected].x - X_OFFSET) / (TILE_SIZE * SCALE);
-      const y = (players[selected].y - Y_OFFSET) / (TILE_SIZE * SCALE);
-      const mutation = gql`
-        mutation{
-          searchAction (
-            gameStateID: "${GAME_ID}",
-            characterCoords: { x: ${x}, y: ${y} },
-          ) {
-            spriteID
-            orientation
-            cornerCoordinates {
-              x
-              y
-            }
-          }
-        }
-      `;
-      client().mutate({ mutation }).then((results) => {
-        const newTileTexture = new PIXI.Texture(
-          PIXI.utils.TextureCache[require(`../assets/maze/${results.data.searchAction.spriteID}.png`)],
-          new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
-        );
-        const newTile = new PIXI.Sprite(newTileTexture);
-        // adding a pivot affects the position of the tile
-        // must offset by (WIDTH / 2) * SCALE to counteract this
-        newTile.x = results.data.searchAction.cornerCoordinates.x * (TILE_SIZE * SCALE) + X_OFFSET
-        + (MAZE_SIZE / 2) * 4;
-        newTile.y = results.data.searchAction.cornerCoordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET
-        + (MAZE_SIZE / 2) * 4;
-        // add pivot in the centre of the tile
-        newTile.pivot.set(MAZE_SIZE / 2);
-        newTile.scale.set(SCALE, SCALE);
-        // start tiles are rotated counterclockwise for god knows why
-        newTile.angle = results.data.searchAction.orientation * (-90);
-        mazeContainer.addChild(newTile);
-      });
-    }
-  }
-
-  render() {
-    console.log(this.state.gameEndTime);
-    return (
-      <div>
-        <Timer endTime={this.state.gameEndTime} />
-        <div className="sidenav">
-          <div className="player">kev</div>
-          <div className="player">rakin</div>
-          <div className="player">luc</div>
-          <div className="player">not-luc</div>
-          <button className="btn btn-lg btn-warning" type="button">
-            test
-          </button>
           <button className="btn btn-lg btn-primary" type="button" onClick={() => this.search()}>
             <FontAwesomeIcon icon="search" />
           </button>
