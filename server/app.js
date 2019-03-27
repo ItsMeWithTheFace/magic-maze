@@ -26,7 +26,7 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: ({ req }) => {
-    const token = req.headers.authorization || '';
+    // const token = req.headers.authorization || '';
 
     // const user = getUser(token);
     // if (!user) throw Error('You must be logged in to use the API');

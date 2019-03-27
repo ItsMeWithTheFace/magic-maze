@@ -315,6 +315,15 @@ const CHARACTER_COORDINATES_CONFIG = [
 
 const TIME = (60000 * 3);
 
+// subscription events
+const ENDTIME_UPDATED = 'endtime_updated';
+const END_GAME = 'end_game';
+
+const MAZETILE_ADDED = 'mazetile_added';
+
+const CHARACTER_COORDINATES_UPDATED = 'char_coords_updated';
+const CHARACTER_LOCK = 'char_lock';
+
 module.exports = {
   DIRECTIONS,
   WALL_TYPE,
@@ -329,4 +338,9 @@ module.exports = {
   CHARACTER_COORDINATES_CONFIG,
   MAZETILE_TILE_CONFIGS,
   TIME,
+  ENDTIME_UPDATED,
+  END_GAME,
+  MAZETILE_ADDED,
+  CHARACTER_COORDINATES_UPDATED,
+  CHARACTER_LOCK,
 };
