@@ -46,7 +46,7 @@ const subscriptions = gql`
     # Tile
   
     # Character
-    characterUpdated(gameStateID: ID!, characterColour: String!): Character!
+    characterUpdated(gameStateID: ID!): Character!
   }
 `;
 

@@ -6,11 +6,10 @@ export const ENDTIME_QUERY = gameStateID => gql`
   }
 `;
 
-export const characterUpdateQuery = gql`
+export const CHARACTER_UPDATED_QUERY = gameStateID => gql`
   subscription {
     characterUpdated(
-      gameStateID: "5c9a99fe78ce17e4d91c171c",
-      characterColour: "red",
+      gameStateID: "${gameStateID}",
     ) {
       colour
       coordinates {
@@ -24,9 +23,9 @@ export const characterUpdateQuery = gql`
   }
 `;
 
-export const mazeTileAddedQuery = gql`
+export const MAZETILE_UPDATED_QUERY = gameStateID => gql`
   subscription {
-    mazeTileAdded(gameStateID: "5c9a99fe78ce17e4d91c171c") {
+    mazeTileAdded(gameStateID: "${gameStateID}") {
       spriteID
       orientation
       cornerCoordinates {

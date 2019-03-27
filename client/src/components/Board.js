@@ -9,7 +9,11 @@ import client from '../common/utils';
 import spritesheet from '../assets/spritesheet.png';
 import Timer from './Timer';
 import './Board.css';
-import { ENDTIME_QUERY } from '../common/queries';
+import {
+  ENDTIME_QUERY,
+  CHARACTER_UPDATED_QUERY,
+  MAZETILE_UPDATED_QUERY,
+} from '../common/queries';
 
 // constants
 const SCALE = 4;
@@ -96,6 +100,18 @@ class Board extends Component {
     client().subscribe({ query: ENDTIME_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
       .forEach(time => {
         this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) });
+      });
+
+    client().subscribe({ query: CHARACTER_UPDATED_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
+      .forEach(character => {
+        // get colour and set his state
+        // this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) });
+      });
+
+    client().subscribe({ query: MAZETILE_UPDATED_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
+      .forEach(mazeTile => {
+        // set add mazeTile
+        // this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) });
       });
   }
 
