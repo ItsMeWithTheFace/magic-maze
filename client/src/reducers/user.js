@@ -2,15 +2,16 @@
 import LOGIN_USER from '../common/consts';
 
 const initialState = {
-  uid: null,
-  gameStateID: null,
+  uid: 'test',
 };
 
 const userReducer = (state = initialState, action) => {
   switch (action.type) {
     case LOGIN_USER:
-      state.uid = action.uid;
-      return state;
+      return {
+        ...state,
+        uid: action.uid,
+      };
     default:
       return state;
   }
