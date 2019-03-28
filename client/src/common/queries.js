@@ -35,3 +35,9 @@ export const MAZETILE_UPDATED_QUERY = gameStateID => gql`
     }
   }
 `;
+
+export const END_GAME_QUERY = gameStateID => gql`
+  subscription {
+    endGame(gameStateID: "${gameStateID}")
+  }
+`;

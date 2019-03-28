@@ -13,6 +13,7 @@ import {
   ENDTIME_QUERY,
   CHARACTER_UPDATED_QUERY,
   MAZETILE_UPDATED_QUERY,
+  END_GAME_QUERY,
 } from '../common/queries';
 
 // constants
@@ -112,6 +113,11 @@ class Board extends Component {
       .forEach(mazeTile => {
         // set add mazeTile
         // this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) });
+      });
+    
+    client().subscribe({ query: END_GAME_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
+      .forEach(bool => {
+        // end the game if true
       });
   }
 
