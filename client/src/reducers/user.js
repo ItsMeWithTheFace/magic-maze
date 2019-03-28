@@ -1,8 +1,8 @@
 /* eslint-disable no-param-reassign */
-import LOGIN_USER from '../common/consts';
+import { LOGIN_USER, LOGOUT_USER } from '../common/consts';
 
 const initialState = {
-  uid: 'test',
+  uid: null,
 };
 
 const userReducer = (state = initialState, action) => {
@@ -11,6 +11,11 @@ const userReducer = (state = initialState, action) => {
       return {
         ...state,
         uid: action.uid,
+      };
+    case LOGOUT_USER:
+      return {
+        ...state,
+        uid: null,
       };
     default:
       return state;
