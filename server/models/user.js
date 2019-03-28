@@ -6,9 +6,8 @@ const db = mongoose.createConnection(process.env.MONGODB_DEV, { useNewUrlParser:
 
 const user = new mongoose.Schema({
   _id: { type: ObjectId, required: true },
-  username: { type: String, required: true },
+  uid: { type: String, required: true },
   email: { type: String, required: true },
-  password: { type: String, required: true }, // salted hash of password
 });
 
 module.exports = {
