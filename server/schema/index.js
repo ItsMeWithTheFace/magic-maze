@@ -4,11 +4,17 @@ const tiles = require('./tiles');
 const character = require('./character');
 const game = require('./game');
 const mazetile = require('./mazetile');
+const user = require('./user');
+const lobby = require('./lobby');
 
 const queries = gql`
   type Query {
     # GameState
     gameState(gameStateID: ID!): GameState!
+
+    # Lobby
+    lobby(lobbyID: ID!): Lobby!
+    lobbies: [Lobby]!
   }
 `;
 
@@ -17,10 +23,6 @@ const mutations = gql`
     # GameState
     createGameState: GameState!
     deleteGameState(gameStateID: ID!): Boolean
-
-    # MazeTile
-
-    # Tile
   
     # Character
     lockCharacter(gameStateID: ID!, userID: ID!, characterColour: String!): Character!
@@ -31,6 +33,13 @@ const mutations = gql`
       endTileCoords: CoordinatesInput!,
     ): Character!
     searchAction(gameStateID: ID!, userID: ID, characterCoords: CoordinatesInput!): MazeTile!
+  
+    # Lobby
+    createLobby(userID: ID!): Lobby!
+    deleteLobby(lobbyID: ID!, userID: ID!): Boolean!
+    joinLobby(lobbyID: ID!, userID: ID!): Lobby!
+    leaveLobby(lobbyID: ID!, userID: ID!): Boolean!
+
   }
 `;
 
@@ -42,11 +51,13 @@ const subscriptions = gql`
 
     # MazeTile
     mazeTileAdded(gameStateID: ID!): MazeTile!
-
-    # Tile
   
     # Character
     characterUpdated(gameStateID: ID!, characterColour: String!): Character!
+
+    # Lobby
+    lobbiesUpdated: Lobby!
+    lobbyUsersUpdate(lobbyID: ID!): [User]!
   }
 `;
 
@@ -59,4 +70,6 @@ module.exports = concatenateTypeDefs([
   character,
   game,
   mazetile,
+  user,
+  lobby,
 ]);
