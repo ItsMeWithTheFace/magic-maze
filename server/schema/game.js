@@ -11,5 +11,6 @@ module.exports = gql`
     endTime: Date!
     mazeTiles: [MazeTile!]         # list of of used and unused mazeTiles
     characters: [Character!]
+    users: [User!]
   }
 `;

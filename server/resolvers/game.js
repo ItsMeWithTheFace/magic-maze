@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const mongoose = require('mongoose');
+const { PubSub, withFilter } = require('apollo-server-express');
 
 const { ObjectId } = mongoose.Types;
 const logger = require('../common/logger');
@@ -10,7 +11,10 @@ const {
   CHARACTER_COLOR_CONFIG,
   CHARACTER_COORDINATES_CONFIG,
   TIME,
+  CREATED_GAMESTATE,
 } = require('../common/consts');
+
+const pubsub = new PubSub();
 
 const mazeTileCreation = async (gameStateID, models) => {
   const mazeTileResult = [];
@@ -90,7 +94,7 @@ module.exports = {
       .findOne({ _id: ObjectId(gameStateID) }),
   },
   Mutation: {
-    createGameState: async (_parent, _args, { models }) => {
+    createGameState: async (_parent, { lobbyID, users }, { models }) => {
       await mongoose.connect(process.env.MONGODB_DEV, { useNewUrlParser: true });
 
       // create gameState object and get ID
@@ -101,6 +105,7 @@ module.exports = {
         endTime: new Date(new Date().getTime() + TIME),
         mazeTiles: [],
         characters: [],
+        users,
       };
 
       const session = await mongoose.startSession();
@@ -117,7 +122,8 @@ module.exports = {
         await Promise.all([characters, mazeTiles]);
         await session.commitTransaction();
         session.endSession();
-        return await models.GameState.findOne({ _id: gameState.insertedId });
+        pubsub.publish(CREATED_GAMESTATE, { createdGameState: users, lobbyID });
+        return gameState.insertedId;
       } catch (err) {
         logger.error(err);
         await session.abortTransaction();
@@ -132,6 +138,17 @@ module.exports = {
         return true;
       }
       return false;
+    },
+  },
+  Subscription: {
+    createdGameState: {
+      // Additional event labels can be passed to asyncIterator creation
+      subscribe: withFilter(
+        () => pubsub.asyncIterator([CREATED_GAMESTATE]),
+        ({ lobbyID }, variables) => (
+          ObjectId(lobbyID).equals(ObjectId(variables.lobbyID))
+        ),
+      ),
     },
   },
 };
