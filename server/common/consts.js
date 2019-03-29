@@ -324,6 +324,9 @@ const MAZETILE_ADDED = 'mazetile_added';
 const CHARACTER_COORDINATES_UPDATED = 'char_coords_updated';
 const CHARACTER_LOCK = 'char_lock';
 
+const LOBBIES_UPDATED = 'lobbies_updated';
+const LOBBY_USER_UPDATED = 'lobby_user_updated';
+
 module.exports = {
   DIRECTIONS,
   WALL_TYPE,
@@ -343,4 +346,6 @@ module.exports = {
   MAZETILE_ADDED,
   CHARACTER_COORDINATES_UPDATED,
   CHARACTER_LOCK,
+  LOBBIES_UPDATED,
+  LOBBY_USER_UPDATED,
 };

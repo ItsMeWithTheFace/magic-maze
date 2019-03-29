@@ -1,16 +1,15 @@
 const mongoose = require('mongoose');
+const { userSchema } = require('./user');
 
 const { ObjectId } = mongoose.Schema.Types;
 
 const db = mongoose.createConnection(process.env.MONGODB_DEV, { useNewUrlParser: true });
 
-const user = new mongoose.Schema({
+const lobby = new mongoose.Schema({
   _id: { type: ObjectId, required: true },
-  uid: { type: String, required: true },
-  email: { type: String, required: true },
+  users: [{ type: userSchema }],
 });
 
 module.exports = {
-  userSchema: user,
-  User: db.collection('User', user),
+  Lobby: db.collection('Lobby', lobby),
 };

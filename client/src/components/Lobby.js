@@ -9,7 +9,7 @@ import startGame from '../actions/game';
 
 const GET_LOBBIES = gql`
 {
-  lobbies() {
+  lobbies {
     _id
     user {
       uid
@@ -44,8 +44,6 @@ class Lobby extends Component {
     this.state = {
     };
   }
-
-
 
   render() {
     const { history, uid } = this.props;
