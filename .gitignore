@@ -25,3 +25,4 @@ yarn-error.log*
 server/deleteDB.txt
 deployment/server_variables.env
 deployment/client_variables.env
+server/config/magicmaze-firebase-adminsdk-*.json
