@@ -6,6 +6,7 @@ const game = require('./game');
 const mazetile = require('./mazetile');
 const user = require('./user');
 const lobby = require('./lobby');
+const actionCard = require('./actionCard');
 
 const queries = gql`
   type Query {
@@ -73,4 +74,5 @@ module.exports = concatenateTypeDefs([
   mazetile,
   user,
   lobby,
+  actionCard,
 ]);
