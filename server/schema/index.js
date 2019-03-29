@@ -6,6 +6,7 @@ const game = require('./game');
 const mazetile = require('./mazetile');
 const user = require('./user');
 const lobby = require('./lobby');
+const actionCard = require('./actionCard');
 
 const queries = gql`
   type Query {
@@ -21,7 +22,7 @@ const queries = gql`
 const mutations = gql`
   type Mutation {
     # GameState
-    createGameState: GameState!
+    createGameState(lobbyID: ID!, users: [User!]!): ID!
     deleteGameState(gameStateID: ID!): Boolean
   
     # Character
@@ -46,6 +47,7 @@ const mutations = gql`
 const subscriptions = gql`
   type Subscription {
     # GameState
+    createdGameState(lobbyID: ID!): ID!
     endTimeUpdated(gameStateID: ID!): Date!
     endGame(gameStateID: ID!): Boolean!
 
@@ -57,7 +59,7 @@ const subscriptions = gql`
 
     # Lobby
     lobbiesUpdated: Lobby!
-    lobbyUsersUpdate(lobbyID: ID!): [User]!
+    lobbyUsersUpdated(lobbyID: ID!): [User]!
   }
 `;
 
@@ -72,4 +74,5 @@ module.exports = concatenateTypeDefs([
   mazetile,
   user,
   lobby,
+  actionCard,
 ]);

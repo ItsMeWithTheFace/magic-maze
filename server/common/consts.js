@@ -316,6 +316,8 @@ const CHARACTER_COORDINATES_CONFIG = [
 const TIME = (60000 * 3);
 
 // subscription events
+const CREATED_GAMESTATE = 'created_gamestate';
+
 const ENDTIME_UPDATED = 'endtime_updated';
 const END_GAME = 'end_game';
 
@@ -341,6 +343,7 @@ module.exports = {
   CHARACTER_COORDINATES_CONFIG,
   MAZETILE_TILE_CONFIGS,
   TIME,
+  CREATED_GAMESTATE,
   ENDTIME_UPDATED,
   END_GAME,
   MAZETILE_ADDED,

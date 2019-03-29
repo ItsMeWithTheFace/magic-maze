@@ -45,7 +45,7 @@ module.exports = {
         { _id: ObjectId(lobbyID) },
         { $addToSet: { users: user } },
       );
-      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdate: lobby.users, lobbyID });
+      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: lobby.users, lobbyID });
       return lobby;
     },
     leaveLobby: async (_parent, { lobbyID, userID }, { models }) => {
@@ -54,7 +54,7 @@ module.exports = {
         { _id: ObjectId(lobbyID) },
         { $addToSet: { users: user } },
       );
-      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdate: users, lobbyID });
+      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: users, lobbyID });
       return _.findIndex(users, u => ObjectId(u._id).equals(userID)) === -1;
     },
   },
@@ -65,7 +65,7 @@ module.exports = {
         () => pubsub.asyncIterator([LOBBIES_UPDATED]),
       ),
     },
-    lobbyUsersUpdate: {
+    lobbyUsersUpdated: {
       // Additional event labels can be passed to asyncIterator creation
       subscribe: withFilter(
         () => pubsub.asyncIterator([LOBBY_USER_UPDATED]),
