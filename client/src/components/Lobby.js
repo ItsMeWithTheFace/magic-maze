@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import gql from 'graphql-tag';
 import { Query, Mutation } from 'react-apollo';
 import './Lobby.css';
-import startGame from '../actions/game';
+import createGame from '../actions/game';
 
 const GET_LOBBIES = gql`
 {
@@ -92,13 +92,13 @@ const mapStateToProps = state => ({
 // Move this function to the component where you will have the create game button
 // and pass in the gameStateID into it, look at the `temp.js` for how to call this func
 const mapDispatchToProps = dispatch => ({
-  startGame: gameStateID => dispatch(startGame(gameStateID)),
+  createGame: gameStateID => dispatch(createGame(gameStateID)),
 });
 
 Lobby.propTypes = {
   history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
   uid: PropTypes.string.isRequired,
-  startGame: PropTypes.func.isRequired,
+  createGame: PropTypes.func.isRequired,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Lobby);
