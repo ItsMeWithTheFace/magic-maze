@@ -6,4 +6,10 @@ module.exports = gql`
     uid: String!
     email: String!
   }
+
+  input UserInput {
+    _id: ID!
+    uid: String!
+    email: String!
+  }
 `;

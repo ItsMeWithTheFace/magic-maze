@@ -22,7 +22,7 @@ const queries = gql`
 const mutations = gql`
   type Mutation {
     # GameState
-    createGameState(lobbyID: ID!, users: [User!]!): ID!
+    createGameState(lobbyID: ID!, users: [UserInput!]!): ID!
     deleteGameState(gameStateID: ID!): Boolean
   
     # Character
