@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import { START_GAME } from '../common/consts';
+import { CREATE_GAME } from '../common/consts';
 
 const initialState = {
   gameStateID: null,
@@ -7,7 +7,7 @@ const initialState = {
 
 const gameStateReducer = (state = initialState, action) => {
   switch (action.type) {
-    case START_GAME:
+    case CREATE_GAME:
       return {
         ...state,
         gameStateID: action.gameStateID,
