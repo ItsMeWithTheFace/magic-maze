@@ -32,8 +32,6 @@ const vortexMovement = (gameState, startTile, endTile, character) => (
 );
 
 const escalatorMovement = (startTile, endTile) => (
-  // true
-  // ObjectId(startTile.mazeTileID) === ObjectId(endTile.mazeTileID)
   startTile.escalatorID === endTile.escalatorID
 );
 
@@ -369,9 +367,8 @@ module.exports = {
       // Additional event labels can be passed to asyncIterator creation
       subscribe: withFilter(
         () => pubsub.asyncIterator([CHARACTER_COORDINATES_UPDATED, CHARACTER_LOCK]),
-        ({ gameStateID, characterColour }, variables) => (
+        ({ gameStateID }, variables) => (
           ObjectId(gameStateID).equals(ObjectId(variables.gameStateID))
-          && characterColour === variables.characterColour
         ),
       ),
     },
@@ -471,9 +468,7 @@ module.exports = {
         char => char.colour === characterColour);
 
       pubsub.publish(CHARACTER_COORDINATES_UPDATED,
-        { characterUpdated: updatedChar, gameStateID, characterColour });
-      pubsub.publish(CHARACTER_LOCK,
-        { characterUpdated: updatedChar, gameStateID, characterColour });
+        { characterUpdated: updatedChar, gameStateID });
 
       return updatedChar;
     },
@@ -595,11 +590,12 @@ module.exports = {
       const updatedGameState = await models.GameState.findOneAndUpdate({
         _id: ObjectId(gameStateID),
         'characters.colour': characterColour,
-        'characters.locked': { $type: 10 },
       },
       {
         $set: {
-          'characters.$.locked': ObjectId(userID),
+          'characters.$.locked': {
+            $cond: { if: { $type: 10 }, then: ObjectId(userID), else: { $type: 10 } },
+          },
         },
       },
       { returnOriginal: false });
@@ -608,7 +604,7 @@ module.exports = {
         char => char.colour === characterColour);
 
       pubsub.publish(CHARACTER_LOCK,
-        { characterUpdated: updatedChar, gameStateID, characterColour });
+        { characterUpdated: updatedChar, gameStateID });
 
       return updatedChar;
     },

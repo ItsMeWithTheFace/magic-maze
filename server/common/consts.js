@@ -317,7 +317,6 @@ const TIME = (60000 * 3);
 
 // subscription events
 const CREATED_GAMESTATE = 'created_gamestate';
-
 const ENDTIME_UPDATED = 'endtime_updated';
 const END_GAME = 'end_game';
 
