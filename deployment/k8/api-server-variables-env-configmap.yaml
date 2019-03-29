@@ -1,0 +1,9 @@
+apiVersion: v1
+data:
+  MONGODB_DEV: XXXX
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: api-server-variables-env
+  name: api-server-variables-env
