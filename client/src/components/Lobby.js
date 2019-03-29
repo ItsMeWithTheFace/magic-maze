@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import { Button } from 'reactstrap';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import gql from "graphql-tag";
-import { Query } from "react-apollo";
+import gql from 'graphql-tag';
+import { Query, Mutation } from 'react-apollo';
 import './Lobby.css';
 import startGame from '../actions/game';
 
@@ -13,6 +13,19 @@ const GET_LOBBIES = gql`
     _id
     user {
       uid
+    }
+  }
+}
+`;
+
+const JOIN_LOBBY = (lobbyID, userID) => gql`
+{
+  mutation {
+    joinLobby(lobbyID: "${lobbyID}", userID: "${userID}") {
+      _id
+      user {
+        uid
+      }
     }
   }
 }
@@ -35,17 +48,39 @@ class Lobby extends Component {
 
 
   render() {
-    const { history } = this.props;
-    const user = this.props.uid;
+    const { history, uid } = this.props;
+    // this may or may not work not sure
+    // might just wanna do something similar to what you did in board
+    // and just have a local state keeping track of all lobbies
+    // and then maybe when a user clicks on a lobby
+    // move them to a different component
+    // you'll also need to add a subscription for more lobbies created
     return (
       <Query query={GET_LOBBIES}>
         {({ loading, error, data }) => {
-          if (loading) return "Loading...";
+          if (loading) return 'Loading...';
           if (error) return `Error! ${error.message}`;
           // do somethign with data
-          return (
-            <div></div>
-          );
+          return data.lobbies.map(({ _id, users }) => (
+            <Mutation mutation={JOIN_LOBBY} key={_id}>
+              {(joinLobby, { mLoading, mError }) => (
+                <div>
+                  <p>{_id}</p>
+                  <lu>{users.map(user => <li>{user.uid}</li>)}</lu>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      joinLobby({ variables: { _id, uid } });
+                    }}
+                  >
+                    <button type="submit">Join Lobby</button>
+                  </form>
+                  {mLoading && <p>Loading...</p>}
+                  {mError && <p>Error :( Please try again</p>}
+                </div>
+              )}
+            </Mutation>
+          ));
         }}
       </Query>
     );
@@ -65,7 +100,7 @@ const mapDispatchToProps = dispatch => ({
 Lobby.propTypes = {
   history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
   uid: PropTypes.string.isRequired,
-  logoutUser: PropTypes.func.isRequired,
+  startGame: PropTypes.func.isRequired,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Lobby);
