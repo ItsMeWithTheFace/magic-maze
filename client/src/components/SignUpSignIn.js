@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import {
   Card, CardHeader, CardBody, CardFooter,
-  Button, Form, FormGroup, Label, Input, Nav, NavItem, NavLink,
+  Button, Form, FormGroup, Label, Input,
+  Nav, NavItem, NavLink,
 } from 'reactstrap';
 import {
   faUser, faEnvelope, faKey, faUserPlus, faSignInAlt,
@@ -20,6 +21,9 @@ library.add([
   faSignInAlt,
 ]);
 
+const REGISTER = 'register';
+const SIGN_IN = 'signin';
+
 class SignUp extends Component {
   constructor(props) {
     super(props);
@@ -27,7 +31,7 @@ class SignUp extends Component {
       username: '',
       email: '',
       password: '',
-      page: 'register',
+      page: REGISTER,
     };
   }
 
@@ -103,7 +107,7 @@ class SignUp extends Component {
       </FormGroup>
     );
 
-    const buttons = page === 'register' ? (
+    const buttons = page === REGISTER ? (
       <Button color="primary" onClick={() => this.signupUser()}>Register</Button>
     ) : (
       <Button color="success" onClick={() => this.loginUser()}>Sign In</Button>
@@ -117,13 +121,13 @@ class SignUp extends Component {
               <CardHeader>
                 <Nav pills>
                   <NavItem>
-                    <NavLink href="#" active={page === 'register'} onClick={() => this.setState({ page: 'register' })}>
+                    <NavLink href="#" active={page === REGISTER} onClick={() => this.setState({ page: REGISTER })}>
                       <FontAwesomeIcon icon="user-plus" />
                       &nbsp;Register
                     </NavLink>
                   </NavItem>
                   <NavItem>
-                    <NavLink href="#" active={page === 'signin'} onClick={() => this.setState({ page: 'signin' })}>
+                    <NavLink href="#" active={page === SIGN_IN} onClick={() => this.setState({ page: SIGN_IN })}>
                       <FontAwesomeIcon icon="sign-in-alt" />
                       &nbsp;Sign In
                     </NavLink>
@@ -132,7 +136,7 @@ class SignUp extends Component {
               </CardHeader>
               <CardBody>
                 <Form>
-                  { page === 'register' ? username : null }
+                  { page === REGISTER ? username : null }
                   <FormGroup>
                     <Label for="emailField">
                       <FontAwesomeIcon icon="envelope" />
