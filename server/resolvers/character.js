@@ -439,7 +439,7 @@ module.exports = {
       if (movedStraightLine) {
         if (endTile.type === TIME_TYPE && !endTile.used) {
           await updateEndTime(ObjectId(gameStateID), ObjectId(endTile._id), models);
-        } else if (endTile.type === ITEM_TYPE && !gameState.allItemsClaimed) {
+        } else if (!gameState.allItemsClaimed) {
           await updateItemClaimed(ObjectId(gameStateID), endTile, character.colour, models);
           await checkCharactersOnTile(ObjectId(gameStateID), ITEM_TYPE, models);
         } else if (endTile.type === EXIT_TYPE
