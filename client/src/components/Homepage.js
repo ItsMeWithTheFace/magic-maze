@@ -14,18 +14,17 @@ const Homepage = ({ history, uid, logoutUser }) => {
   const buttons = uid ? (
     <div className="col" style={{ textAlign: 'center' }}>
       <Button color="primary" size="lg" onClick={() => history.push('/lobby')}>Find a Lobby</Button>
+      <Button color="danger" size="lg" className="ml-4" onClick={() => signOut()}>Sign Out</Button>
       <Button color="success" size="lg" className="ml-4" onClick={() => history.push('/board')}>Play Singleplayer</Button>
-      <Button color="secondary" size="lg" className="ml-4" onClick={() => signOut()}>Sign Out</Button>
     </div>
   ) : (
     <div className="col" style={{ textAlign: 'center' }}>
-      {/* <Button color="primary" size="lg" onClick={() => history.push('/login')}>Login</Button> */}
       <Button color="primary" size="lg" onClick={() => history.push('/auth')}>Play</Button>
     </div>
   );
   return (
     <div className="cover">
-      <div className="container">
+      <div className="container" style={{ marginTop: '15em' }}>
         <header>
           <h1>MAGIC MAZE</h1>
           <div className="logo">

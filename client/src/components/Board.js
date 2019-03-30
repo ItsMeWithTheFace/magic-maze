@@ -429,8 +429,7 @@ class Board extends Component {
             {' '}
           </ModalFooter>
         </Modal>
-        <Timer history={history} endTime={gameEndTime} />
-        {/* <Timer history={history} endTime={new Date(new Date().getTime() + 3 * 60000)} doTick={doTick} /> */}
+        <Timer history={history} endTime={gameEndTime} doTick={doTick} />
         <div className="sidenav">
           <div className="player">kev</div>
           <div className="player">rakin</div>
