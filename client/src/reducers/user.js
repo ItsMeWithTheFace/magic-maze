@@ -12,12 +12,12 @@ const userReducer = (state = initialState, action) => {
     case SIGNUP_USER:
       return {
         ...state,
-        uid: action.payload.uid,
+        ...action.payload,
       };
     case LOGIN_USER:
       return {
         ...state,
-        uid: action.payload.uid,
+        ...action.payload,
       };
     case LOGOUT_USER:
       return {

@@ -5,6 +5,11 @@ import * as PIXI from 'pixi.js';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import {
+  Button, Modal, ModalHeader,
+  ModalBody, ModalFooter,
+} from 'reactstrap';
+import { toast } from 'react-toastify';
 import client from '../common/utils';
 import spritesheet from '../assets/spritesheet.png';
 import Timer from './Timer';
@@ -16,8 +21,7 @@ import {
   END_GAME_QUERY,
   ITEMS_CLAIMED_QUERY,
 } from '../common/queries';
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
-import { toast } from 'react-toastify';
+
 
 // constants
 const SCALE = 4;
@@ -99,134 +103,92 @@ class Board extends Component {
     document.getElementById('board').appendChild(app.view);
     document.body.style.overflow = 'hidden';
     PIXI.Loader.shared
-    .add(spriteList)
-    .load(this.setup);
+      .add(spriteList)
+      .load(this.setup);
 
     client().subscribe({ query: ENDTIME_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
-      .forEach(time => {
-        this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) });
-      });
+      .forEach(time => this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) }));
 
     // get colour and set character state
     client().subscribe({ query: CHARACTER_UPDATED_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
-    .forEach(results => {
-      const { players, selector } = this.state;
+      .forEach((results) => {
+        const { players, selector } = this.state;
 
-      // update selected character
-      const colour = results.data.characterUpdated.colour;
+        // update selected character
+        const colour = results.data.characterUpdated.colour;
 
-      if (results.data.characterUpdated.itemClaimed) {
-        if (!players[colour].itemClaimed) {
-          toast.success(`👌🏻 ${colour} item claimed`, {
-            position: 'bottom-right',
-            autoClose: false,
-          });
+        if (results.data.characterUpdated.itemClaimed) {
+          if (!players[colour].itemClaimed) {
+            toast.success(`👌🏻 ${colour} item claimed`, {
+              position: 'bottom-right',
+              autoClose: false,
+            });
+          }
         }
-      }
 
-      // update character position
-      let characterList = players;
-      characterList[colour].x = results.data.characterUpdated.coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
-      characterList[colour].y = results.data.characterUpdated.coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
-      characterList[colour].itemClaimed = results.data.characterUpdated.itemClaimed;
+        // update character position
+        const characterList = players;
+        characterList[colour].x = results.data.characterUpdated.coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
+        characterList[colour].y = results.data.characterUpdated.coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
+        characterList[colour].itemClaimed = results.data.characterUpdated.itemClaimed;
 
-      // update selector position
-      let selectorObj = selector;
-      selectorObj.x = characterList[colour].x;
-      selectorObj.y = characterList[colour].y;
+        // update selector position
+        const selectorObj = selector;
+        selectorObj.x = characterList[colour].x;
+        selectorObj.y = characterList[colour].y;
 
-      this.setState({
-        selected: colour,
-        players: characterList,
-        selector: selectorObj,
+        this.setState({
+          selected: colour,
+          players: characterList,
+          selector: selectorObj,
+        });
       });
-    });
 
     // set add mazeTile
     client().subscribe({ query: MAZETILE_UPDATED_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
-    .forEach(results => {
-      const newTileTexture = new PIXI.Texture(
-        PIXI.utils.TextureCache[require(`../assets/maze/${results.data.mazeTileAdded.spriteID}.png`)],
-        new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
-      );
-      const newTile = new PIXI.Sprite(newTileTexture);
-      // adding a pivot affects the position of the tile
-      // must offset by (WIDTH / 2) * SCALE to counteract this
-      newTile.x = results.data.mazeTileAdded.cornerCoordinates.x * (TILE_SIZE * SCALE) + X_OFFSET + (MAZE_SIZE / 2) * 4;
-      newTile.y = results.data.mazeTileAdded.cornerCoordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET + (MAZE_SIZE / 2) * 4;
-      // add pivot in the centre of the tile
-      newTile.pivot.set(MAZE_SIZE / 2);
-      newTile.scale.set(SCALE, SCALE);
-      newTile.angle = results.data.mazeTileAdded.orientation * (-90);
-      mazeContainer.addChild(newTile);
-    });
+      .forEach((results) => {
+        const newTileTexture = new PIXI.Texture(
+          PIXI.utils.TextureCache[require(`../assets/maze/${results.data.mazeTileAdded.spriteID}.png`)],
+          new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
+        );
+        const newTile = new PIXI.Sprite(newTileTexture);
+        // adding a pivot affects the position of the tile
+        // must offset by (WIDTH / 2) * SCALE to counteract this
+        newTile.x = results.data.mazeTileAdded.cornerCoordinates.x * (TILE_SIZE * SCALE) + X_OFFSET + (MAZE_SIZE / 2) * 4;
+        newTile.y = results.data.mazeTileAdded.cornerCoordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET + (MAZE_SIZE / 2) * 4;
+        // add pivot in the centre of the tile
+        newTile.pivot.set(MAZE_SIZE / 2);
+        newTile.scale.set(SCALE, SCALE);
+        newTile.angle = results.data.mazeTileAdded.orientation * (-90);
+        mazeContainer.addChild(newTile);
+      });
 
     // display message if all items have been claimed
     client().subscribe({ query: ITEMS_CLAIMED_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
-    .forEach(() => {
-      toast.info('🙌🏻 all items have been claimed! all vortexes disabled! time to escape!', {
-        position: 'bottom-right',
-        autoClose: false,
+      .forEach(() => {
+        toast.info('🙌🏻 all items have been claimed! all vortexes disabled! time to escape!', {
+          position: 'bottom-right',
+          autoClose: false,
+        });
+        this.setState({
+          itemsClaimed: true,
+        });
       });
-      this.setState({
-        itemsClaimed: true,
-      });
-    })
-    
+
     // end the game if true
     client().subscribe({ query: END_GAME_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
-    .forEach(() => {
-      this.setState({
-        doTick: false,
-        gameOver: true,
+      .forEach(() => {
+        this.setState({
+          doTick: false,
+          gameOver: true,
+        });
       });
-    });
-  }
-
-  /**
-   * move the selected character based on selected option
-   * move algorithm:/
-   * - calculate the delta between the click and the character's position
-   * - convert delta to the number of tile spaces to increase this by
-   *     (i.e. this should return the number of tiles moved; integer between 0 and n)
-   * - scale up the coordinate to the actual coordinate
-   * @param {*} e click event
-   */
-  move = (e) => {
-    const { selected, players } = this.state;
-    if (selected) {
-      const endX = players[selected].x + Math.floor((e.world.x - players[selected].x)
-      / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-      const endY = players[selected].y + Math.floor((e.world.y - players[selected].y)
-      / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-
-      const deltaX = (endX - X_OFFSET) / (TILE_SIZE * SCALE);
-      const deltaY = (endY - Y_OFFSET) / (TILE_SIZE * SCALE);
-      const mutation = gql`
-        mutation {
-          moveCharacter(
-            gameStateID: "${GAME_ID}",
-            userID: null,
-            characterColour: "${selected}",
-            endTileCoords:{ x: ${deltaX}, y: ${deltaY} },
-          ) {
-            _id
-            colour
-            coordinates {
-              x
-              y
-            }
-          }
-        }
-      `;
-      client().mutate({ mutation });
-    }
   }
 
   /**
    * call backend and do initial setup
    */
-  setup = () => {
+  setup() {
     const {
       players,
     } = this.state;
@@ -308,11 +270,51 @@ class Board extends Component {
   }
 
   /**
+   * move the selected character based on selected option
+   * move algorithm:/
+   * - calculate the delta between the click and the character's position
+   * - convert delta to the number of tile spaces to increase this by
+   *     (i.e. this should return the number of tiles moved; integer between 0 and n)
+   * - scale up the coordinate to the actual coordinate
+   * @param {*} e click event
+   */
+  move(e) {
+    const { selected, players } = this.state;
+    if (selected) {
+      const endX = players[selected].x + Math.floor((e.world.x - players[selected].x)
+      / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+      const endY = players[selected].y + Math.floor((e.world.y - players[selected].y)
+      / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
+
+      const deltaX = (endX - X_OFFSET) / (TILE_SIZE * SCALE);
+      const deltaY = (endY - Y_OFFSET) / (TILE_SIZE * SCALE);
+      const mutation = gql`
+        mutation {
+          moveCharacter(
+            gameStateID: "${GAME_ID}",
+            userID: null,
+            characterColour: "${selected}",
+            endTileCoords:{ x: ${deltaX}, y: ${deltaY} },
+          ) {
+            _id
+            colour
+            coordinates {
+              x
+              y
+            }
+          }
+        }
+      `;
+      client().mutate({ mutation });
+    }
+  }
+
+  /**
    * create a new character
    * @param {*} offset offset value in the spritesheet (hard-coded)
    * @param {*} data the character JSON
    */
-  createCharacter = (offset, data) => {
+  createCharacter(offset, data) {
     const {
       selected,
     } = this.state;
@@ -376,7 +378,7 @@ class Board extends Component {
   /**
    * search for a new maze tile upon encountering a search tile
    */
-  search = () => {
+  search() {
     const { selected, players } = this.state;
 
     if (selected) {
@@ -403,15 +405,17 @@ class Board extends Component {
 
   render() {
     let message;
+    const { itemsClaimed, gameOver, doTick, gameEndTime } = this.state;
+    const { history } = this.props;
 
-    if (this.state.itemsClaimed) {
+    if (itemsClaimed) {
       message = <div className="message">ALL VORTEXES ARE DISABLED!</div>;
     }
 
     return (
       <div>
         {/* game win modal */}
-        <Modal isOpen={this.state.gameOver} size={'lg'}>
+        <Modal isOpen={gameOver} size="lg">
           <ModalHeader>
             <span role="img" aria-label="party">🎉</span> 
             YOU WON! 
@@ -421,11 +425,12 @@ class Board extends Component {
             The boys escaped in time and a free to fight a dragon or something!
           </ModalBody>
           <ModalFooter>
-            <Button color="success" onClick={() => this.props.history.push('/')}>Play Again</Button>{' '}
+            <Button color="success" onClick={() => history.push('/')}>Play Again</Button>
+            {' '}
           </ModalFooter>
         </Modal>
-        {/* <Timer endTime={this.state.gameEndTime} /> */}
-        <Timer history={this.props.history} endTime={new Date(new Date().getTime() + 3 * 60000)} doTick={this.state.doTick} />
+        <Timer history={history} endTime={gameEndTime} />
+        {/* <Timer history={history} endTime={new Date(new Date().getTime() + 3 * 60000)} doTick={doTick} /> */}
         <div className="sidenav">
           <div className="player">kev</div>
           <div className="player">rakin</div>

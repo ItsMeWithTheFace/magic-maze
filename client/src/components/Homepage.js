@@ -20,7 +20,7 @@ const Homepage = ({ history, uid, logoutUser }) => {
   ) : (
     <div className="col" style={{ textAlign: 'center' }}>
       {/* <Button color="primary" size="lg" onClick={() => history.push('/login')}>Login</Button> */}
-      <Button color="primary" size="lg" onClick={() => history.push('/signup')}>Play</Button>
+      <Button color="primary" size="lg" onClick={() => history.push('/auth')}>Play</Button>
     </div>
   );
   return (

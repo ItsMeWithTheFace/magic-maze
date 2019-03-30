@@ -5,8 +5,7 @@ import { Provider } from 'react-redux';
 import Board from './components/Board';
 import Lobby from './components/Lobby';
 import Homepage from './components/Homepage';
-import Login from './components/Login';
-import SignUp from './components/SignUp';
+import SignUpSignIn from './components/SignUpSignIn';
 
 const App = ({ store }) => (
   <Provider store={store}>
@@ -16,8 +15,7 @@ const App = ({ store }) => (
         <Route path="/board" component={Board} />
         <Route exact path="/lobby" component={Lobby} />
         <Route path="/lobby/:lobbyID" component={Lobby} />
-        <Route path="/login" component={Login} />
-        <Route path="/signup" component={SignUp} />
+        <Route path="/auth" component={SignUpSignIn} />
       </Switch>
     </BrowserRouter>
   </Provider>
