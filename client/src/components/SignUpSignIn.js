@@ -108,9 +108,9 @@ class SignUp extends Component {
     );
 
     const buttons = page === REGISTER ? (
-      <Button color="primary" onClick={() => this.signupUser()}>Register</Button>
+      <Button color="primary" className="mb-1" onClick={() => this.signupUser()}>Register</Button>
     ) : (
-      <Button color="success" onClick={() => this.loginUser()}>Login</Button>
+      <Button color="success" className="mb-1" onClick={() => this.loginUser()}>Login</Button>
     );
 
     return (
@@ -120,7 +120,7 @@ class SignUp extends Component {
             <header>
               <h1 className="mb-5">{page.toUpperCase()}</h1>
             </header>
-            <Card>
+            <Card className="bg-dark">
               <CardHeader>
                 <Nav pills>
                   <NavItem>
@@ -170,7 +170,7 @@ class SignUp extends Component {
               </CardBody>
               <CardFooter style={{ textAlign: 'center' }}>
                 {buttons}
-                <Button color="secondary" className="ml-2" onClick={() => history.push('/')}>Back</Button>
+                <Button color="secondary" className="ml-2 mb-1" onClick={() => history.push('/')}>Back</Button>
               </CardFooter>
             </Card>
           </div>

@@ -1,5 +1,10 @@
 import React, { Component } from 'react';
-import { Button } from 'reactstrap';
+import {
+  Table, Card, CardHeader, CardBody, CardTitle, CardFooter, Badge, Button
+} from 'reactstrap';
+import { faUsers } from '@fortawesome/free-solid-svg-icons';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import gql from 'graphql-tag';
@@ -31,6 +36,10 @@ const JOIN_LOBBY = (lobbyID, userID) => gql`
 }
 `;
 
+library.add([
+  faUsers,
+]);
+
 /**
  * Not sure what states you want to fill that in. Redux states are passed into
  * the component as props. So this will be the main lobby screen or you can rename it
@@ -46,43 +55,106 @@ class Lobby extends Component {
   }
 
   render() {
-    const { history, uid } = this.props;
-    // this may or may not work not sure
-    // might just wanna do something similar to what you did in board
-    // and just have a local state keeping track of all lobbies
-    // and then maybe when a user clicks on a lobby
-    // move them to a different component
-    // you'll also need to add a subscription for more lobbies created
+    const { history } = this.props;
+
     return (
-      <Query query={GET_LOBBIES}>
-        {({ loading, error, data }) => {
-          if (loading) return 'Loading...';
-          if (error) return `Error! ${error.message}`;
-          // do somethign with data
-          return data.lobbies.map(({ _id, users }) => (
-            <Mutation mutation={JOIN_LOBBY} key={_id}>
-              {(joinLobby, { mLoading, mError }) => (
-                <div>
-                  <p>{_id}</p>
-                  <lu>{users.map(user => <li>{user.uid}</li>)}</lu>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      joinLobby({ variables: { _id, uid } });
-                    }}
-                  >
-                    <button type="submit">Join Lobby</button>
-                  </form>
-                  {mLoading && <p>Loading...</p>}
-                  {mError && <p>Error :( Please try again</p>}
-                </div>
-              )}
-            </Mutation>
-          ));
-        }}
-      </Query>
+      <div>
+        <div className="cover">
+          <div className="container" style={{ marginTop: '10em', marginBottom: '2em' }}>
+            <header>
+              <h1>FIND A GAME</h1>
+            </header>
+            <div className="row mt-5">
+              <div className="col">
+                <Table dark striped hover className="h-100">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td>Kevin's lobby</td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td>Stephen's lobby</td>
+                    </tr>
+                    <tr>
+                      <td>3</td>
+                      <td>Rakin's lobby</td>
+                    </tr>
+                  </tbody>
+                </Table>
+              </div>
+              <div className="col">
+                <Card className="bg-dark text-white">
+                  <CardHeader tag="h3">
+                    <FontAwesomeIcon icon="users" />
+                    &nbsp;Kevin's lobby
+                  </CardHeader>
+                  <CardBody>
+                    <CardTitle>Current Users</CardTitle>
+                    <Badge color="primary" className="mr-2">Kevin</Badge>
+                    <Badge color="success" className="mr-2">Rakin</Badge>
+                    <Badge color="warning" className="mr-2">Stephen</Badge>
+                  </CardBody>
+                  <CardFooter style={{ textAlign: 'center' }}>
+                    <Button color="success" className="mr-2 mb-1" disabled>Start Game</Button>
+                    <Button color="danger" className="mb-1">Leave Lobby</Button>
+                  </CardFooter>
+                </Card>
+              </div>
+            </div>
+            <div className="row mt-5">
+              <div className="col" style={{ textAlign: 'center' }}>
+                <Button color="secondary" size="lg" onClick={() => history.push('/')}>Back</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
+  //   const { history, uid } = this.props;
+  //   // this may or may not work not sure
+  //   // might just wanna do something similar to what you did in board
+  //   // and just have a local state keeping track of all lobbies
+  //   // and then maybe when a user clicks on a lobby
+  //   // move them to a different component
+  //   // you'll also need to add a subscription for more lobbies created
+  //   return (
+  //     <Query query={GET_LOBBIES}>
+  //       {({ loading, error, data }) => {
+  //         if (loading) return 'Loading...';
+  //         if (error) return `Error! ${error.message}`;
+  //         // do somethign with data
+  //         return data.lobbies.map(({ _id, users }) => (
+  //           <Mutation mutation={JOIN_LOBBY} key={_id}>
+  //             {(joinLobby, { mLoading, mError }) => (
+  //               <div>
+  //                 <p>{_id}</p>
+  //                 <lu>{users.map(user => <li>{user.uid}</li>)}</lu>
+  //                 <form
+  //                   onSubmit={(e) => {
+  //                     e.preventDefault();
+  //                     joinLobby({ variables: { _id, uid } });
+  //                   }}
+  //                 >
+  //                   <button type="submit">Join Lobby</button>
+  //                 </form>
+  //                 {mLoading && <p>Loading...</p>}
+  //                 {mError && <p>Error :( Please try again</p>}
+  //               </div>
+  //             )}
+  //           </Mutation>
+  //         ));
+  //       }}
+  //     </Query>
+  //   );
+  // }
 }
 
 const mapStateToProps = state => ({

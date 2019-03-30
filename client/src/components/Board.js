@@ -6,7 +6,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import {
-  Button, Modal, ModalHeader,
+  Alert, Button, Modal, ModalHeader,
   ModalBody, ModalFooter,
 } from 'reactstrap';
 import { toast } from 'react-toastify';
@@ -121,7 +121,6 @@ class Board extends Component {
           if (!players[colour].itemClaimed) {
             toast.success(`👌🏻 ${colour} item claimed`, {
               position: 'bottom-right',
-              autoClose: false,
             });
           }
         }
@@ -405,11 +404,13 @@ class Board extends Component {
 
   render() {
     let message;
-    const { itemsClaimed, gameOver, doTick, gameEndTime } = this.state;
+    const {
+      itemsClaimed, gameOver, doTick, gameEndTime,
+    } = this.state;
     const { history } = this.props;
 
     if (itemsClaimed) {
-      message = <div className="message">ALL VORTEXES ARE DISABLED!</div>;
+      message = <div className="message">All items have been claimed! All vortexes are disabled!</div>;
     }
 
     return (
@@ -417,16 +418,15 @@ class Board extends Component {
         {/* game win modal */}
         <Modal isOpen={gameOver} size="lg">
           <ModalHeader>
-            <span role="img" aria-label="party">🎉</span> 
-            YOU WON! 
+            <span role="img" aria-label="party">🎉</span>
+            &nbsp;YOU WON!&nbsp;
             <span role="img" aria-label="party">🎉</span>
           </ModalHeader>
           <ModalBody>
             The boys escaped in time and a free to fight a dragon or something!
           </ModalBody>
           <ModalFooter>
-            <Button color="success" onClick={() => history.push('/')}>Play Again</Button>
-            {' '}
+            <Button color="success" className="mb-1" onClick={() => history.push('/')}>Play Again</Button>
           </ModalFooter>
         </Modal>
         <Timer history={history} endTime={gameEndTime} doTick={doTick} />
