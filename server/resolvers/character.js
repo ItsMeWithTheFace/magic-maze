@@ -18,6 +18,7 @@ const {
   TIME,
   ENDTIME_UPDATED,
   END_GAME,
+  ALL_ITEMS_CLAIMED,
   MAZETILE_ADDED,
   CHARACTER_COORDINATES_UPDATED,
   CHARACTER_LOCK,
@@ -82,6 +83,7 @@ const checkCharactersOnTile = async (gameStateID, tileType, models) => {
         { $set: { allCharactersEscaped: true } },
       );
     } else if (tileType === ITEM_TYPE) {
+      pubsub.publish(ALL_ITEMS_CLAIMED, { allItemsClaimed: true, gameStateID });
       await models.GameState.updateOne({ _id: gameStateID }, {
         $set: {
           allItemsClaimed: true,
@@ -336,6 +338,14 @@ module.exports = {
   Query: {
   },
   Subscription: {
+    allItemsClaimed: {
+      subscribe: withFilter(
+        () => pubsub.asyncIterator([ALL_ITEMS_CLAIMED]),
+        ({ gameStateID }, variables) => (
+          ObjectId(gameStateID).equals(ObjectId(variables.gameStateID))
+        ),
+      ),
+    },
     endTimeUpdated: {
       // Additional event labels can be passed to asyncIterator creation
       subscribe: withFilter(

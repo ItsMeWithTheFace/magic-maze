@@ -319,6 +319,7 @@ const TIME = (60000 * 3);
 const CREATED_GAMESTATE = 'created_gamestate';
 const ENDTIME_UPDATED = 'endtime_updated';
 const END_GAME = 'end_game';
+const ALL_ITEMS_CLAIMED = 'all_items_claimed';
 
 const MAZETILE_ADDED = 'mazetile_added';
 
@@ -345,6 +346,7 @@ module.exports = {
   CREATED_GAMESTATE,
   ENDTIME_UPDATED,
   END_GAME,
+  ALL_ITEMS_CLAIMED,
   MAZETILE_ADDED,
   CHARACTER_COORDINATES_UPDATED,
   CHARACTER_LOCK,

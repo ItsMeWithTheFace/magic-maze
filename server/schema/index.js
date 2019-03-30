@@ -50,6 +50,7 @@ const subscriptions = gql`
     createdGameState(lobbyID: ID!): ID!
     endTimeUpdated(gameStateID: ID!): Date!
     endGame(gameStateID: ID!): Boolean!
+    allItemsClaimed(gameStateID: ID!): Boolean!
 
     # MazeTile
     mazeTileAdded(gameStateID: ID!): MazeTile!
