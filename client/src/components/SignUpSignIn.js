@@ -49,6 +49,9 @@ class SignUp extends Component {
         });
 
         history.push('/');
+      })
+      .catch((err) => {
+        throw new Error(err);
       });
   }
 
@@ -77,7 +80,7 @@ class SignUp extends Component {
         }
       })
       .catch((err) => {
-        console.error(err);
+        throw new Error(err);
       });
   }
 
