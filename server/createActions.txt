@@ -1,4 +1,0 @@
-# /bin/sh
-
-mongo mongodb+srv://magicmaze:KXKOgza0BNxEpNam@magicmaze-dev-iwrhj.mongodb.net/magicmaze-dev?retryWrites=true --eval 'db.ActionCard.insertMany([{ actions: ["search", "down"], playerCount: [4, 5, 6, 7, 8] }, { actions: ["vortex", "left"], playerCount: [3, 4, 5, 6, 7, 8] }, { actions: ["up"], playerCount: [4, 5, 6, 7, 8] }, { actions: ["escalator", "right"], playerCount: [4, 5, 6, 7, 8] }]);'
-
