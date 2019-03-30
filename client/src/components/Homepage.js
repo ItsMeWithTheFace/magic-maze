@@ -19,13 +19,13 @@ const Homepage = ({ history, uid, logoutUser }) => {
     </div>
   ) : (
     <div className="col" style={{ textAlign: 'center' }}>
-      <Button color="primary" size="lg" onClick={() => history.push('/login')}>Login</Button>
-      <Button color="success" size="lg" className="ml-4" onClick={() => history.push('/signup')}>Sign Up</Button>
+      {/* <Button color="primary" size="lg" onClick={() => history.push('/login')}>Login</Button> */}
+      <Button color="primary" size="lg" onClick={() => history.push('/signup')}>Play</Button>
     </div>
   );
   return (
     <div className="cover">
-      <div className="container" style={{ marginTop: '12%' }}>
+      <div className="container">
         <header>
           <h1>MAGIC MAZE</h1>
           <div className="logo">

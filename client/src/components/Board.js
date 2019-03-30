@@ -14,7 +14,9 @@ import {
   CHARACTER_UPDATED_QUERY,
   MAZETILE_UPDATED_QUERY,
   END_GAME_QUERY,
+  ITEMS_CLAIMED_QUERY,
 } from '../common/queries';
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import { toast } from 'react-toastify';
 
 // constants
@@ -57,12 +59,13 @@ class Board extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      // character objects
-      selected: '',
-      players: [],
-      selector: null,
-      // end time (for timer)
-      gameEndTime: new Date(),
+      selected: '',               // selected character colour (will refactor this later)
+      players: [],                // character objects
+      selector: null,             // cross-hair object
+      gameEndTime: new Date(),    // end time (for timer)
+      itemsClaimed: false,        // whether or not all the items have been claimed
+      doTick: true,               // whether or not the timer should tick
+      gameOver: false,            // whether or not the game is done or not
     };
 
     viewport = new Viewport({
@@ -112,6 +115,15 @@ class Board extends Component {
       // update selected character
       const colour = results.data.characterUpdated.colour;
 
+      if (results.data.characterUpdated.itemClaimed) {
+        if (!players[colour].itemClaimed) {
+          toast.success(`👌🏻 ${colour} item claimed`, {
+            position: 'bottom-right',
+            autoClose: false,
+          });
+        }
+      }
+
       // update character position
       let characterList = players;
       characterList[colour].x = results.data.characterUpdated.coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
@@ -148,11 +160,26 @@ class Board extends Component {
       newTile.angle = results.data.mazeTileAdded.orientation * (-90);
       mazeContainer.addChild(newTile);
     });
+
+    // display message if all items have been claimed
+    client().subscribe({ query: ITEMS_CLAIMED_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
+    .forEach(() => {
+      toast.info('🙌🏻 all items have been claimed! all vortexes disabled! time to escape!', {
+        position: 'bottom-right',
+        autoClose: false,
+      });
+      this.setState({
+        itemsClaimed: true,
+      });
+    })
     
     // end the game if true
     client().subscribe({ query: END_GAME_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
-    .forEach(results => {
-      // TODO: end game logic
+    .forEach(() => {
+      this.setState({
+        doTick: false,
+        gameOver: true,
+      });
     });
   }
 
@@ -215,8 +242,10 @@ class Board extends Component {
             orientation
           }
           endTime
+          allItemsClaimed
           characters {
             colour
+            itemClaimed
             coordinates {
               x
               y
@@ -228,6 +257,7 @@ class Board extends Component {
     client().query({ query }).then((results) => {
       this.setState({
         gameEndTime: new Date(results.data.gameState.endTime),
+        itemsClaimed: results.data.gameState.allItemsClaimed,
       });
 
       // render and create characters
@@ -294,6 +324,7 @@ class Board extends Component {
     const character = new PIXI.Sprite(texture);
     character.x = data.coordinates.x * (TILE_SIZE * SCALE) + X_OFFSET;
     character.y = data.coordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET;
+    character.itemClaimed = data.itemClaimed;
     character.scale.set(SCALE, SCALE);
     character.interactive = true;
     // sprite handling can only be caught using 'click'
@@ -371,10 +402,30 @@ class Board extends Component {
   }
 
   render() {
+    let message;
+
+    if (this.state.itemsClaimed) {
+      message = <div className="message">ALL VORTEXES ARE DISABLED!</div>;
+    }
+
     return (
       <div>
+        {/* game win modal */}
+        <Modal isOpen={this.state.gameOver} size={'lg'}>
+          <ModalHeader>
+            <span role="img" aria-label="party">🎉</span> 
+            YOU WON! 
+            <span role="img" aria-label="party">🎉</span>
+          </ModalHeader>
+          <ModalBody>
+            The boys escaped in time and a free to fight a dragon or something!
+          </ModalBody>
+          <ModalFooter>
+            <Button color="success" onClick={() => this.props.history.push('/')}>Play Again</Button>{' '}
+          </ModalFooter>
+        </Modal>
         {/* <Timer endTime={this.state.gameEndTime} /> */}
-        <Timer endTime={new Date(new Date().getTime() + 3 * 60000)} />
+        <Timer history={this.props.history} endTime={new Date(new Date().getTime() + 3 * 60000)} doTick={this.state.doTick} />
         <div className="sidenav">
           <div className="player">kev</div>
           <div className="player">rakin</div>
@@ -384,6 +435,7 @@ class Board extends Component {
             <FontAwesomeIcon icon="search" />
           </button>
         </div>
+        { message }
         <div id="board" />
       </div>
     );

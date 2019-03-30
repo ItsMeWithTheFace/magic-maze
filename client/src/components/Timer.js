@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import PropTypes from 'prop-types';
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 
 class Timer extends Component {
   constructor(props) {
     super(props);
     this.state = {
       now: new Date(),
+      doTick: props.doTick,
     };
   }
 
@@ -22,9 +25,12 @@ class Timer extends Component {
   }
 
   tick = () => {
-    this.setState({
-      now: new Date(),
-    });
+    const { doTick } = this.state;
+    if (doTick) {
+      this.setState({
+        now: new Date(),
+      });
+    }
   };
 
   render() {
@@ -52,6 +58,20 @@ class Timer extends Component {
   
     return (
       <div>
+        {/* game lost modal */}
+        <Modal isOpen={minutes <= 0 && seconds <= 0} size={'lg'}>
+          <ModalHeader>
+            <span role="img" aria-label="siren">🚨</span> 
+            YOU LOST! 
+            <span role="img" aria-label="siren">🚨</span>
+          </ModalHeader>
+          <ModalBody>
+            The boys failed to escape in time and got caught by the authorities...
+          </ModalBody>
+          <ModalFooter>
+            <Button color="danger" onClick={() => this.props.history.push('/')}>Exit</Button>{' '}
+          </ModalFooter>
+        </Modal>
         <div className="timer">
           { minutes }
           :
@@ -61,5 +81,9 @@ class Timer extends Component {
     );
   }
 }
+
+Timer.propTypes = {
+  history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
+};
 
 export default Timer;

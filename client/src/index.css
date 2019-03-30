@@ -14,3 +14,20 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+
+label {
+  font-weight: bold;
+}
+
+.modal-content {
+  color: black;
+}
+
+.container {
+  margin-top: 12%;
+}
+
+.card {
+  color: black;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}

@@ -56,7 +56,7 @@ const subscriptions = gql`
     mazeTileAdded(gameStateID: ID!): MazeTile!
   
     # Character
-    characterUpdated(gameStateID: ID!, characterColour: String!): Character!
+    characterUpdated(gameStateID: ID!): Character!
 
     # Lobby
     lobbiesUpdated: Lobby!
