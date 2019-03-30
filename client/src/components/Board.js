@@ -29,7 +29,7 @@ const TILE_SIZE = 16;
 const MAZE_SIZE = 64;
 const X_OFFSET = 350;
 const Y_OFFSET = 80;
-const GAME_ID = '5c9c02a162145af40aba8d8d';
+const GAME_ID = '5c9fd4f2dfc68c2c5710752e';
 
 // fontawesome
 library.add(faSearch);
@@ -188,7 +188,7 @@ class Board extends Component {
   /**
    * call backend and do initial setup
    */
-  setup() {
+  setup = () => {
     const {
       players,
     } = this.state;
@@ -278,7 +278,7 @@ class Board extends Component {
    * - scale up the coordinate to the actual coordinate
    * @param {*} e click event
    */
-  move(e) {
+  move = (e) => {
     const { selected, players } = this.state;
     if (selected) {
       const endX = players[selected].x + Math.floor((e.world.x - players[selected].x)
@@ -314,7 +314,7 @@ class Board extends Component {
    * @param {*} offset offset value in the spritesheet (hard-coded)
    * @param {*} data the character JSON
    */
-  createCharacter(offset, data) {
+  createCharacter = (offset, data) => {
     const {
       selected,
     } = this.state;
@@ -373,12 +373,12 @@ class Board extends Component {
       });
     });
     return character;
-  };
+  }
 
   /**
    * search for a new maze tile upon encountering a search tile
    */
-  search() {
+  search = () => {
     const { selected, players } = this.state;
 
     if (selected) {
