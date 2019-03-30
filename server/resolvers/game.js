@@ -97,6 +97,8 @@ module.exports = {
     createGameState: async (_parent, { lobbyID, users }, { models }) => {
       await mongoose.connect(process.env.MONGODB_DEV, { useNewUrlParser: true });
 
+      let actions = await models.ActionCard.find({ playerCount: users.length }).toArray();
+      actions = shuffle(actions.map(action => action.actions));
       // create gameState object and get ID
       const initialGameState = {
         vortexEnabled: true,
@@ -105,31 +107,22 @@ module.exports = {
         endTime: new Date(new Date().getTime() + TIME),
         mazeTiles: [],
         characters: [],
+        actions,
         users,
       };
 
-      const session = await mongoose.startSession();
-      session.startTransaction();
-      try {
-        const gameState = await models.GameState.insertOne({ ...initialGameState });
+      const gameState = await models.GameState.insertOne({ ...initialGameState });
 
-        const characters = characterCreation(gameState.insertedId, models);
+      const characters = characterCreation(gameState.insertedId, models);
 
-        const allMazeTiles = await mazeTileCreation(gameState.insertedId, models);
+      const allMazeTiles = await mazeTileCreation(gameState.insertedId, models);
 
-        const mazeTiles = await appendMazeTiles(gameState.insertedId, allMazeTiles, models);
+      const mazeTiles = await appendMazeTiles(gameState.insertedId, allMazeTiles, models);
 
-        await Promise.all([characters, mazeTiles]);
-        await session.commitTransaction();
-        session.endSession();
-        pubsub.publish(CREATED_GAMESTATE, { createdGameState: users, lobbyID });
-        return gameState.insertedId;
-      } catch (err) {
-        logger.error(err);
-        await session.abortTransaction();
-        session.endSession();
-        throw err;
-      }
+      await Promise.all([characters, mazeTiles]);
+
+      pubsub.publish(CREATED_GAMESTATE, { createdGameState: gameState.insertedId, lobbyID });
+      return gameState.insertedId;
     },
     deleteGameState: async (_parent, { gameStateID }, { models }) => {
       const deleteGS = await models.GameState.deleteOne({ _id: ObjectId(gameStateID) });

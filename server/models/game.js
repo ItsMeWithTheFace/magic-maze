@@ -15,6 +15,7 @@ const gameState = new mongoose.Schema({
   mazeTiles: [{ type: mazeTileSchema, required: true }],
   characters: [{ type: characterSchema, required: true }],
   users: [{ type: userSchema, required: true }],
+  actions: [{ type: Number, required: true }],
 });
 
 module.exports = {
