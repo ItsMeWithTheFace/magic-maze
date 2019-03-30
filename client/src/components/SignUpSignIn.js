@@ -12,7 +12,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import PropTypes from 'prop-types';
 import { signupUser, loginUser } from '../actions/user';
 
-
 library.add([
   faUser,
   faEnvelope,
