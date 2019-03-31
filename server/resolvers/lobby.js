@@ -13,6 +13,21 @@ module.exports = {
       .findOne({ _id: ObjectId(lobbyID) }),
     lobbies: async (_parent, _args, { models }) => models.Lobby.find({}).toArray(),
   },
+  Subscription: {
+    lobbiesUpdated: {
+      // Additional event labels can be passed to asyncIterator creation
+      subscribe: () => pubsub.asyncIterator([LOBBIES_UPDATED]),
+    },
+    lobbyUsersUpdated: {
+      // Additional event labels can be passed to asyncIterator creation
+      subscribe: withFilter(
+        () => pubsub.asyncIterator([LOBBY_USER_UPDATED]),
+        ({ lobbyID }, variables) => (
+          ObjectId(lobbyID).equals(ObjectId(variables.lobbyID))
+        ),
+      ),
+    },
+  },
   Mutation: {
     createLobby: async (_parent, { userID }, { models }) => {
       const user = await models.User.findOne({ uid: userID });
@@ -30,7 +45,7 @@ module.exports = {
     deleteLobby: async (_parent, { lobbyID, userID }, { models }) => {
       const res = await models.Lobby.deleteOne({
         _id: ObjectId(lobbyID),
-        'user.uid': userID,
+        'users.uid': userID,
       });
       if (res.deletedCount > 0) {
         const lobbies = models.Lobby.find({}).toArray();
@@ -46,7 +61,7 @@ module.exports = {
         { $addToSet: { users: user } },
         { returnOriginal: false },
       );
-      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value.users, lobbyID });
+      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value, lobbyID });
       return value;
     },
     leaveLobby: async (_parent, { lobbyID, userID }, { models }) => {
@@ -56,23 +71,8 @@ module.exports = {
         { $pull: { users: user } },
         { returnOriginal: false },
       );
-      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value.users, lobbyID });
+      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value, lobbyID });
       return _.findIndex(value.users, u => u.uid === userID) === -1;
-    },
-  },
-  Subscription: {
-    lobbiesUpdated: {
-      // Additional event labels can be passed to asyncIterator creation
-      subscribe: () => pubsub.asyncIterator([LOBBIES_UPDATED]),
-    },
-    lobbyUsersUpdated: {
-      // Additional event labels can be passed to asyncIterator creation
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([LOBBY_USER_UPDATED]),
-        ({ lobbyID }, variables) => (
-          ObjectId(lobbyID).equals(ObjectId(variables.lobbyID))
-        ),
-      ),
     },
   },
 };

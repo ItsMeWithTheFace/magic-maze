@@ -60,7 +60,7 @@ const subscriptions = gql`
 
     # Lobby
     lobbiesUpdated: [Lobby]!
-    lobbyUsersUpdated(lobbyID: ID!): [User]!
+    lobbyUsersUpdated(lobbyID: ID!): Lobby!
   }
 `;
 

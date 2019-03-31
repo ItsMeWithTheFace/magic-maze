@@ -271,7 +271,7 @@ class Board extends Component {
 
   /**
    * move the selected character based on selected option
-   * move algorithm:/
+   * move algorithm:
    * - calculate the delta between the click and the character's position
    * - convert delta to the number of tile spaces to increase this by
    *     (i.e. this should return the number of tiles moved; integer between 0 and n)
@@ -385,7 +385,7 @@ class Board extends Component {
       const x = (players[selected].x - X_OFFSET) / (TILE_SIZE * SCALE);
       const y = (players[selected].y - Y_OFFSET) / (TILE_SIZE * SCALE);
       const mutation = gql`
-        mutation{
+        mutation {
           searchAction (
             gameStateID: "${GAME_ID}",
             characterCoords: { x: ${x}, y: ${y} },
@@ -399,6 +399,7 @@ class Board extends Component {
           }
         }
       `;
+      console.log(mutation);
       client().mutate({ mutation });
     }
   }
