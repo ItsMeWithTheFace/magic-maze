@@ -444,7 +444,7 @@ class Board extends Component {
    * search for a new maze tile upon encountering a search tile
    */
   search = () => {
-    const { selected, characters, gameStateID } = this.state;
+    const { selected, characters, gameStateID, currentUser, selector } = this.state;
 
     if (selected) {
       const x = (characters[selected].x - X_OFFSET) / (TILE_SIZE * SCALE);
@@ -453,7 +453,7 @@ class Board extends Component {
         mutation {
           searchAction (
             gameStateID: "${gameStateID}",
-            userID: "${this.state.currentUser.uid}",
+            userID: "${currentUser.uid}",
             characterCoords: { x: ${x}, y: ${y} },
           ) {
             spriteID
@@ -466,7 +466,10 @@ class Board extends Component {
         }
       `;
       client().mutate({ mutation }).then((results) => {
-        this.setState({ selected: '' });
+        characters[selected].locked = null;
+        const selectorObjIndex = selector.findIndex((select) => select.colour === selected);
+        selector[selectorObjIndex].visible = false;
+        this.setState({ selected: '', characters, selector });
       });
     }
   }
