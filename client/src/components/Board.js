@@ -391,6 +391,7 @@ class Board extends Component {
   createCharacter = (offset, data) => {
     const {
       gameStateID,
+      selected,
     } = this.state;
 
     const texture = new PIXI.Texture(
@@ -438,7 +439,7 @@ class Board extends Component {
           }
         }
       `;
-      if (!character.locked || character.locked === this.props.currentUser.uid) {
+      if ((!character.locked || character.locked === this.props.currentUser.uid) && selected === '') {
         client().mutate({ mutation }).then((results) => {
           // update colour, x, y
           const { characters, selector } = this.state;
