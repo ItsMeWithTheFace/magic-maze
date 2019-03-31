@@ -5,7 +5,13 @@ import * as PIXI from 'pixi.js';
 import { connect } from 'react-redux';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import {
+  faArrowCircleUp,
+  faArrowCircleDown,
+  faArrowCircleLeft,
+  faArrowCircleRight,
+  faSearch
+} from '@fortawesome/free-solid-svg-icons';
 import {
   Button, Modal, ModalHeader,
   ModalBody, ModalFooter,
@@ -22,6 +28,7 @@ import {
   END_GAME_QUERY,
   ITEMS_CLAIMED_QUERY,
 } from '../common/queries';
+import { ACTIONS } from '../common/consts';
 
 // constants
 const SCALE = 4;
@@ -31,7 +38,13 @@ const X_OFFSET = 350;
 const Y_OFFSET = 80;
 
 // fontawesome
-library.add(faSearch);
+library.add([
+  faSearch,
+  faArrowCircleUp,
+  faArrowCircleDown,
+  faArrowCircleLeft,
+  faArrowCircleRight,
+]);
 
 // PIXI elements
 let app;
@@ -254,13 +267,6 @@ class Board extends Component {
     client().query({ query }).then((results) => {
       console.log(results);
 
-      this.setState({
-        gameEndTime: new Date(results.data.gameState.endTime),
-        itemsClaimed: results.data.gameState.allItemsClaimed,
-        users: results.data.gameState.users,
-        actions,
-      });
-
       // render and create characters
       characters.red = this.createCharacter(3, results.data.gameState.characters.find(x => x.colour === 'red'));
       characters.purple = this.createCharacter(0, results.data.gameState.characters.find(x => x.colour === 'purple'));
@@ -317,8 +323,15 @@ class Board extends Component {
         selectorList.push(selectorObject);
       });
 
+      console.log(characters);
+      console.log(selector);
       this.setState({
+        gameEndTime: new Date(results.data.gameState.endTime),
+        itemsClaimed: results.data.gameState.allItemsClaimed,
+        users: results.data.gameState.users,
+        characters,
         selector: selectorList,
+        actions: results.data.gameState.actions,
       });
 
       // add containers to viewport
@@ -386,6 +399,8 @@ class Board extends Component {
       new PIXI.Rectangle(offset * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE),
     );
     const character = new PIXI.Sprite(texture);
+    character.colour = data.colour;
+    character.locked = null;
     character.x = data.coordinates.x * (TILE_SIZE * SCALE) + X_OFFSET;
     character.y = data.coordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET;
     character.itemClaimed = data.itemClaimed;
@@ -394,20 +409,6 @@ class Board extends Component {
     // sprite handling can only be caught using 'click'
     // (this is different from the viewport for some reason...)
 
-    const selectorTexture = new PIXI.Texture(
-      PIXI.utils.TextureCache[spritesheet],
-      new PIXI.Rectangle(5 * TILE_SIZE, 4 * TILE_SIZE, TILE_SIZE, TILE_SIZE),
-    );
-    const selectorObject = new PIXI.Sprite(selectorTexture);
-    selectorObject.colour = character.colour;
-    selectorObject.x = null;
-    selectorObject.y = null;
-    selectorObject.scale.set(SCALE, SCALE);
-    const newSelector = this.state.selector;
-    newSelector.push(selectorObject);
-    this.setState({
-      selector: newSelector,
-    });
     character.on('click', () => {
       // initialize selector sprite
       // const selectorTexture = new PIXI.Texture(
@@ -438,15 +439,10 @@ class Board extends Component {
           }
         }
       `;
-      console.log(this.state);
-      console.log(character);
       if (!character.locked || character.locked === this.props.currentUser.uid) {
         client().mutate({ mutation }).then((results) => {
           // update colour, x, y
-          console.log(this.state);
           const { characters, selector } = this.state;
-          console.log(characters);
-          console.log(selector);
           const { locked } = results.data.lockCharacter;
           const selected = locked ? results.data.lockCharacter.colour : null;
           const selectorObjIndex = selector.findIndex((select) => select.colour === selected);
@@ -529,6 +525,7 @@ class Board extends Component {
     if (itemsClaimed) {
       message = <div className="message">All items have been claimed! All vortexes are disabled!</div>;
     }
+    console.log(this.state);
 
     return (
       <div>
@@ -548,7 +545,12 @@ class Board extends Component {
         </Modal>
         <Timer history={history} endTime={gameEndTime} doTick={doTick} />
         <div className="sidenav">
-          {this.state.users.map(user => <div key={user.uid} className="player">user.username</div>)}
+          {this.state.users.map((user, index) => (
+            <div key={user.uid} className="player">
+              <div>{user.username}</div>
+              <div>{this.state.actions[index]}</div>
+            </div>
+          ))}
           <button className="btn btn-lg btn-primary" type="button" onClick={() => this.search()}>
             <FontAwesomeIcon icon="search" />
           </button>
