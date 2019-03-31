@@ -59,7 +59,7 @@ class Homepage extends Component {
     );
     return (
       <div className="cover">
-        <div className="container">
+        <div className="container" style={{ marginTop: '15em' }}>
           <header>
             <h1>MAGIC MAZE</h1>
             <div className="logo">

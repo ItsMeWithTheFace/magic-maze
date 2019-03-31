@@ -23,6 +23,7 @@ const GET_LOBBIES = gql`
     _id
     users {
       uid
+      username
     }
   }
 }
@@ -109,23 +110,27 @@ class Lobby extends Component {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      {
-                        lobbyList.length > 0
-                          ? lobbyList.map(lobby => (
+                    {
+                      lobbyList.length > 0
+                        ? lobbyList.map(lobby => (
+                          <tr>
                             <td>
-                              {lobby}
+                              <span style={{ fontWeight: 'bold' }}>{lobby.users[0].username}</span>
                               &apos;s lobby
                             </td>
-                          ))
-                          : <td>No lobbies currently...</td>
-                      }
-                    </tr>
+                          </tr>
+                        ))
+                        : (
+                          <tr>
+                            <td>No lobbies currently...</td>
+                          </tr>
+                        )
+                    }
                   </tbody>
                 </Table>
               </div>
               <div className="col">
-                <Card className="bg-dark text-white">
+                <Card className="bg-dark text-white h-100">
                   <CardHeader tag="h3">
                     <FontAwesomeIcon icon="users" />
                     &nbsp;Kevin's lobby

@@ -6,7 +6,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import {
-  Alert, Button, Modal, ModalHeader,
+  Button, Modal, ModalHeader,
   ModalBody, ModalFooter,
 } from 'reactstrap';
 import { toast } from 'react-toastify';
@@ -102,6 +102,7 @@ class Board extends Component {
   componentDidMount() {
     document.getElementById('board').appendChild(app.view);
     document.body.style.overflow = 'hidden';
+    PIXI.Loader.shared.reset();
     PIXI.Loader.shared
       .add(spriteList)
       .load(this.setup);
