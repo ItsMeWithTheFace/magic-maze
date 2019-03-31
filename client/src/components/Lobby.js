@@ -214,7 +214,7 @@ class Lobby extends Component {
   }
 
   createLobby = (userID) => {
-    const { lobbyList, currentUser } = this.state;
+    const { currentUser } = this.state;
     const currentLobbyID = idx(this.state, _ => _.currentLobby._id);
     
     const mutation = gql`
