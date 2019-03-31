@@ -150,7 +150,7 @@ class Board extends Component {
             .forEach((results) => {
               const { characters, selector } = this.state;
 
-              const { colour, locked } = results.data.characterUpdated;
+              const { colour, coordinates, locked, itemClaimed } = results.data.characterUpdated;
 
               if (results.data.characterUpdated.itemClaimed) {
                 if (!characters[colour].itemClaimed) {
@@ -162,15 +162,15 @@ class Board extends Component {
 
               // update character position
               const characterList = characters;
-              characterList[colour].x = results.data.characterUpdated.coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
-              characterList[colour].y = results.data.characterUpdated.coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
-              characterList[colour].itemClaimed = results.data.characterUpdated.itemClaimed;
+              characterList[colour].x = coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
+              characterList[colour].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
+              characterList[colour].itemClaimed = itemClaimed;
 
               // update selector position
               const selectorObjIndex = selector.findIndex((select) => select.colour === colour);
-              selector[selectorObjIndex] = (!locked && selectorObjIndex > -1)
-                ? { ...selector[selectorObjIndex], x: characterList[colour].x, y: characterList[colour].y }
-                : { ...selector[selectorObjIndex], x: null, y: null };
+              selector[selectorObjIndex].x = coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
+              selector[selectorObjIndex].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
+              selector[selectorObjIndex].visible = (locked && selectorObjIndex > -1) ? true : false;
 
               this.setState({
                 characters: characterList,
@@ -223,7 +223,7 @@ class Board extends Component {
   }
 
   componentWillUnmount() {
-    this.this.authListener();
+    this.authListener();
   }
 
   /**
@@ -315,8 +315,9 @@ class Board extends Component {
       results.data.gameState.characters.forEach(character => {
         const selectorObject = new PIXI.Sprite(selectorTexture);
         selectorObject.colour = character.colour;
-        selectorObject.x = null;
-        selectorObject.y = null;
+        selectorObject.x = character.coordinates.x * (TILE_SIZE * SCALE) + X_OFFSET;
+        selectorObject.y = character.coordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET;
+        selectorObject.visible = false;
         selectorObject.scale.set(SCALE, SCALE);
         artifactContainer.addChild(selectorObject);
         selectorList.push(selectorObject);
@@ -392,6 +393,7 @@ class Board extends Component {
     const {
       gameStateID,
       selected,
+      currentUser,
     } = this.state;
 
     const texture = new PIXI.Texture(
@@ -406,23 +408,8 @@ class Board extends Component {
     character.itemClaimed = data.itemClaimed;
     character.scale.set(SCALE, SCALE);
     character.interactive = true;
-    // sprite handling can only be caught using 'click'
-    // (this is different from the viewport for some reason...)
 
-    character.on('click', () => {
-      // initialize selector sprite
-      // const selectorTexture = new PIXI.Texture(
-      //   PIXI.utils.TextureCache[spritesheet],
-      //   new PIXI.Rectangle(5 * TILE_SIZE, 4 * TILE_SIZE, TILE_SIZE, TILE_SIZE),
-      // );
-      // const selectorObject = new PIXI.Sprite(selectorTexture);
-      // selectorObject.x = character.x;
-      // selectorObject.y = character.y;
-      // selectorObject.scale.set(SCALE, SCALE);
-      // this.setState({
-      //   selector: selectorObject,
-      // });
-      
+    character.on('click', () => {      
       const mutation = gql`
         mutation {
           lockCharacter(
@@ -439,46 +426,20 @@ class Board extends Component {
           }
         }
       `;
-      if ((!character.locked || character.locked === this.props.currentUser.uid) && selected === '') {
+      if ((!character.locked || character.locked === this.props.currentUser.uid)
+      && (selected === '' || selected === character.colour)) {
         client().mutate({ mutation }).then((results) => {
           // update colour, x, y
-          const { characters, selector } = this.state;
-          const { locked } = results.data.lockCharacter;
-          const selected = locked ? results.data.lockCharacter.colour : null;
-          const selectorObjIndex = selector.findIndex((select) => select.colour === selected);
-          selector[selectorObjIndex] = (!locked && selectorObjIndex > -1)
-            ? { ...selector[selectorObjIndex], x: characters[selected].x, y: characters[character.colour].y }
-            : { ...selector[selectorObjIndex], x: null, y: null };
-          this.setState({ selected, selector });          
+          const { selector } = this.state;
+          const { colour, coordinates, locked } = results.data.lockCharacter;
+          const newSelected = locked === currentUser.uid ? colour : '';
+          const selectorObjIndex = selector.findIndex((select) => select.colour === colour);
+          selector[selectorObjIndex].x = coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
+          selector[selectorObjIndex].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
+          selector[selectorObjIndex].visible = locked ? true : false;
+          this.setState({ selected: newSelected, selector });
         });
       }
-
-      // // if there is nothing selected
-      // if (selected === '') {
-      //   // add the selector icon
-      //   artifactContainer.addChild(selectorObject);
-      //   viewport.addChild(artifactContainer);
-      // // if swapping selected character
-      // } else if (selected !== data.colour) {
-      //   // remove all selectors
-      //   for (let i = 0; i < artifactContainer.children.length; i += 1) {
-      //     artifactContainer.removeChildAt(i);
-      //   }
-      //   // add the new selector
-      //   artifactContainer.addChild(selectorObject);
-      //   viewport.addChild(artifactContainer);
-      // } else {
-      //   // remove all selectors
-      //   for (let i = 0; i < artifactContainer.children.length; i += 1) {
-      //     artifactContainer.removeChildAt(i);
-      //   }
-      // }
-
-      // set selected character
-      // NOTE: may need to adjust the logic game logic for freeing selected characters
-      // this.setState({
-      //   selected: selected === '' || selected !== data.colour ? data.colour : '',
-      // });
     });
     return character;
   }

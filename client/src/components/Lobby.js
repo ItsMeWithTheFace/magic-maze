@@ -121,7 +121,7 @@ class Lobby extends Component {
     // subscription for when gamestate is created
     gameSub = client().subscribe({ query: CREATED_GAMESTATE_QUERY(lobbyID), variables: { lobbyID } })
       .subscribe((results) => {
-        this.props.createGame(results.data.createGameState);
+        this.props.createGame(results.data.createdGameState);
         this.props.history.push('/board');
       });
   }
