@@ -6,6 +6,7 @@ const cors = require('cors');
 const _ = require('lodash');
 const { ApolloServer, AuthenticationError } = require('apollo-server-express');
 const { createServer } = require('http');
+const bodyParser = require('body-parser');
 const logger = require('./common/logger');
 const { firebaseApp } = require('./config/firebase');
 
@@ -23,16 +24,17 @@ app.use(cors({
   origin: 'http://localhost:3000',
   optionsSuccessStatus: 200,
 }));
+app.use(bodyParser.json());
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: async ({ req }) => {
+    if (!req || !req.headers) return {}; // websockets
+
     let token;
     if (req && req.headers && req.headers.authorization) {
       token = req.headers.authorization;
-    } else if (req && req.headers['Sec-WebSocket-Protocol']) { // might use access_token param instead
-      token = req.headers['Sec-WebSocket-Protocol'];
     } else {
       throw new AuthenticationError('Authorization token not provided');
     }
@@ -43,29 +45,60 @@ const server = new ApolloServer({
       .auth()
       .verifyIdToken(token);
 
-    const userInfo = {
-      uid: decodedToken.uid,
-      email: decodedToken.email,
-    };
-    // equivalent atomic findOneOrCreate action in mongo
-    const user = await models.User.findOneAndUpdate(
-      { uid: decodedToken.uid },
-      { $setOnInsert: userInfo },
-      {
-        upsert: true, // create new record if data doesn't exist
-        returnOriginal: false,
-      },
-    );
+    // user should be signed up
+    const user = await models.User.findOne({ uid: decodedToken.uid });
+    if (!user) throw new AuthenticationError('User does not exist');
 
     return {
-      user: user.value,
+      user,
       models,
     };
   },
   subscriptions: {
     keepAlive: true,
     path: '/server/graphql',
+    onConnect: async (connectionParams) => {
+      if (!connectionParams.authToken) throw new AuthenticationError('Missing auth token');
+      const decodedToken = await firebaseApp
+        .auth()
+        .verifyIdToken(connectionParams.authToken);
+
+      const userInfo = {
+        uid: decodedToken.uid,
+        email: decodedToken.email,
+      };
+      // equivalent atomic findOneOrCreate action in mongo
+      const user = await models.User.findOneAndUpdate(
+        { uid: decodedToken.uid },
+        { $setOnInsert: userInfo },
+        {
+          upsert: true, // create new record if data doesn't exist
+          returnOriginal: false,
+        },
+      );
+
+      return {
+        user: user.value,
+      };
+    },
   },
+});
+
+app.post('/server/adduser', async (req, res) => {
+  const { uid, username, email } = req.body;
+  if (!uid || !username || !email) return res.status(400).end('Missing required params');
+
+  const insertResult = await models.User.insertOne({
+    uid,
+    username,
+    email,
+  });
+
+  if (insertResult.insertedCount === 1) {
+    return res.status(201).end('Created user');
+  }
+
+  return res.status(400).end('Can\'t insert user');
 });
 
 server.applyMiddleware({ app, path: '/server/graphql' });
