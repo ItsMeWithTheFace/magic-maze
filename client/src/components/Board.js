@@ -10,7 +10,8 @@ import {
   faArrowCircleDown,
   faArrowCircleLeft,
   faArrowCircleRight,
-  faSearch
+  faSearch,
+  faUser,
 } from '@fortawesome/free-solid-svg-icons';
 import {
   Button, Modal, ModalHeader,
@@ -44,6 +45,7 @@ library.add([
   faArrowCircleDown,
   faArrowCircleLeft,
   faArrowCircleRight,
+  faUser,
 ]);
 
 // PIXI elements
@@ -480,6 +482,49 @@ class Board extends Component {
       message = <div className="message">All items have been claimed! All vortexes are disabled!</div>;
     }
 
+    const actionMap = {
+      UP: (
+        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+          <FontAwesomeIcon icon="arrow-circle-up" />
+        </Button>
+      ),
+      DOWN: (
+        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+          <FontAwesomeIcon icon="arrow-circle-down" />
+        </Button>
+      ),
+      LEFT: (
+        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+          <FontAwesomeIcon icon="arrow-circle-left" />
+        </Button>
+      ),
+      RIGHT: (
+        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+          <FontAwesomeIcon icon="arrow-circle-right" />
+        </Button>
+      ),
+      SEARCH: (
+        <Button 
+          color="primary" 
+          className="mr-2 mt-3" 
+          type="button" 
+          style={{ fontSize: '1.5em' }}
+          onClick={() => this.search()}>
+          <FontAwesomeIcon icon="search" />
+        </Button>
+      ),
+      ESCALATOR: (
+        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+          E
+        </Button>
+      ),
+      VORTEX: (
+        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+          🌀
+        </Button>
+      ),
+    }
+
     return (
       <div>
         {/* game win modal */}
@@ -497,16 +542,23 @@ class Board extends Component {
           </ModalFooter>
         </Modal>
         <Timer history={history} endTime={gameEndTime} doTick={doTick} />
+
         <div className="sidenav">
           {this.state.users.map((user, index) => (
-            <div key={user.uid} className="player">
-              <div>{user.username}</div>
-              <div>{this.state.actions[index]}</div>
+            <div key={user.uid} className={"player " + (this.state.currentUser.uid === user.uid ? 'bg-warning text-dark' : 'bg-info')}>
+              <div className="mt-4" style={{ fontWeight: 'bold' }}>
+                <FontAwesomeIcon icon="user" />
+                &nbsp;{user.username}
+              </div>
+              <div>
+                {
+                  this.state.actions[index].map(action => {
+                    return actionMap[action]
+                  })
+                }
+              </div>
             </div>
           ))}
-          <button className="btn btn-lg btn-primary" type="button" onClick={() => this.search()}>
-            <FontAwesomeIcon icon="search" />
-          </button>
         </div>
         { message }
         <div id="board" />

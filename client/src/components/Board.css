@@ -4,7 +4,7 @@
 
 .sidenav{
   height: 100%;
-  width: 150px;
+  width: 200px;
   position: fixed;
   z-index: 1;
   top: 0;
@@ -46,10 +46,10 @@
 .player {
   display: flex;
   flex-direction: column;
-  height: 100px;
-  width: 100px;
+  height: 160px;
+  width: 160px;
   border-radius: 5px;
-  background-color: #EFC94C;
+  background-color: #45B29D;
   margin: 2em 0 2em 0;
   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
 }
