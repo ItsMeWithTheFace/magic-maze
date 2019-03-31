@@ -4,15 +4,25 @@ import { HttpLink } from 'apollo-link-http';
 import { WebSocketLink } from 'apollo-link-ws';
 import { getMainDefinition } from 'apollo-utilities';
 import { InMemoryCache } from 'apollo-cache-inmemory';
+import Cookies from 'universal-cookie';
 
-const httpLink = new HttpLink({
+const cookies = new Cookies();
+const token = cookies.get('authToken');
+
+const httpLink = () => new HttpLink({
   uri: `http://${document.location.hostname}:8000/server/graphql`,
+  headers: {
+    authorization: token,
+  },
 });
 
-const wsLink = new WebSocketLink({
+const wsLink = () => new WebSocketLink({
   uri: `ws://${document.location.hostname}:8000/server/graphql`,
   options: {
     reconnect: true,
+    connectionParams: {
+      authToken: token,
+    },
   },
 });
 
@@ -24,8 +34,8 @@ const link = split(
     const { kind, operation } = getMainDefinition(query);
     return kind === 'OperationDefinition' && operation === 'subscription';
   },
-  wsLink,
-  httpLink,
+  wsLink(),
+  httpLink(),
 );
 
 const client = () => new ApolloClient({
