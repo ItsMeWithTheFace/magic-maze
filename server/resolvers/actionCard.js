@@ -1,11 +1,11 @@
 module.exports = {
   Action: {
-    SEARCH: 'search',
-    UP: 'up',
-    DOWN: 'down',
-    LEFT: 'left',
-    RIGHT: 'right',
-    ESCALATOR: 'escalator',
-    VORTEX: 'vortex',
+    UP: 0,
+    LEFT: 1,
+    DOWN: 2,
+    RIGHT: 3,
+    SEARCH: 4,
+    ESCALATOR: 5,
+    VORTEX: 6,
   },
 };

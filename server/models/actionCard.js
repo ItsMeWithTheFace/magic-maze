@@ -7,7 +7,7 @@ const db = mongoose.createConnection(process.env.MONGODB_DEV, { useNewUrlParser:
 // controls the state
 const actionCard = new mongoose.Schema({
   _id: { type: ObjectId, required: true },
-  actions: [{ type: String, required: true }],
+  actions: [{ type: Number, required: true }],
   playerCount: [{ type: Number, required: true }],
 });
 

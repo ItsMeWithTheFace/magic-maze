@@ -12,11 +12,11 @@ module.exports = gql`
   }
 
   enum Action {
-    SEARCH
     UP
-    DOWN
     LEFT
+    DOWN
     RIGHT
+    SEARCH
     ESCALATOR
     VORTEX
   }

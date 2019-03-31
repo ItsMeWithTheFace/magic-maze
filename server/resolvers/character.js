@@ -23,6 +23,7 @@ const {
   CHARACTER_COORDINATES_UPDATED,
   CHARACTER_LOCK,
 } = require('../common/consts');
+const { Action } = require('./actionCard');
 
 const pubsub = new PubSub();
 
@@ -94,7 +95,7 @@ const checkCharactersOnTile = async (gameStateID, tileType, models) => {
   }
 };
 
-const updateEndTime = async (gameStateID, endTileID, models) => {
+const updateEndTime = async (gameStateID, endTileID, rotateActions, models) => {
   const newEndTime = new Date(new Date().getTime() + TIME);
   pubsub.publish(ENDTIME_UPDATED, { endTimeUpdated: newEndTime, gameStateID });
   await Promise.all([
@@ -104,6 +105,7 @@ const updateEndTime = async (gameStateID, endTileID, models) => {
     {
       $set: {
         endTime: newEndTime,
+        actions: rotateActions,
       },
     }),
     models.Tile.updateOne({
@@ -394,6 +396,9 @@ module.exports = {
 
       const gameState = await models.GameState.findOne({ _id: ObjectId(gameStateID) });
       const character = _.find(gameState.characters, char => char.colour === characterColour);
+      const userIndex = _.findIndex(gameState.users, user => (user.uid === userID));
+
+      if (userIndex === -1) throw Error('User does not exist in game');
 
       const usedMazeTiles = _.reduce(gameState.mazeTiles, (array, mt) => {
         if (mt.cornerCoordinates) array.push(ObjectId(mt._id));
@@ -416,39 +421,50 @@ module.exports = {
         throw Error('Start and/or End Tiles, Character or Game State does not exist');
       }
 
-      let shouldMove = false;
+      let specialMovement = false;
       let movedStraightLine = false;
 
-      if (startTile.type === VORTEX_TYPE && endTile.type === VORTEX_TYPE) {
+      // checks for vortex movement or escalator movement
+      if (startTile.type === VORTEX_TYPE
+        && endTile.type === VORTEX_TYPE
+        && gameState.actions[userIndex].includes(Action.VORTEX)) {
         // Potentially vortex or escalator
-        shouldMove = vortexMovement(gameState, startTile, endTile, character);
-      } else if (startTile.type === ESCALATOR_TYPE && endTile.type === ESCALATOR_TYPE) {
-        shouldMove = escalatorMovement(startTile, endTile);
-      } else if (startTile.coordinates.y !== endTile.coordinates.y
+        specialMovement = vortexMovement(gameState, startTile, endTile, character);
+      } else if (startTile.type === ESCALATOR_TYPE
+        && endTile.type === ESCALATOR_TYPE
+        && gameState.actions[userIndex].includes(Action.ESCALATOR)) {
+        specialMovement = escalatorMovement(startTile, endTile);
+      }
+
+      // checks for horizontal or vertical movement
+      if (startTile.coordinates.y !== endTile.coordinates.y
         && startTile.coordinates.x === endTile.coordinates.x) {
         // Potentially up or down
         direction = startTile.coordinates.y > endTile.coordinates.y
           ? DIRECTIONS.UP
           : DIRECTIONS.DOWN;
-        shouldMove = await moveDirection(
-          gameState, character.colour, startTile, endTile, direction, models,
-        );
-        movedStraightLine = shouldMove;
+        if (gameState.actions[userIndex].includes(direction)) {
+          movedStraightLine = await moveDirection(
+            gameState, character.colour, startTile, endTile, direction, models,
+          );
+        }
       } else if (startTile.coordinates.x !== endTile.coordinates.x
         && startTile.coordinates.y === endTile.coordinates.y) {
         // Potentially left or right
         direction = startTile.coordinates.x > endTile.coordinates.x
           ? DIRECTIONS.LEFT
           : DIRECTIONS.RIGHT;
-        shouldMove = await moveDirection(
-          gameState, character.colour, startTile, endTile, direction, models,
-        );
-        movedStraightLine = shouldMove;
+        if (gameState.actions[userIndex].includes(direction)) {
+          movedStraightLine = await moveDirection(
+            gameState, character.colour, startTile, endTile, direction, models,
+          );
+        }
       }
 
-      if (movedStraightLine) {
+      if (movedStraightLine && !specialMovement) {
         if (endTile.type === TIME_TYPE && !endTile.used) {
-          await updateEndTime(ObjectId(gameStateID), ObjectId(endTile._id), models);
+          const rotateActions = rotateList(gameState.actions, 1);
+          await updateEndTime(ObjectId(gameStateID), ObjectId(endTile._id), rotateActions, models);
         } else if (!gameState.allItemsClaimed) {
           await updateItemClaimed(ObjectId(gameStateID), endTile, character.colour, models);
           await checkCharactersOnTile(ObjectId(gameStateID), ITEM_TYPE, models);
@@ -460,7 +476,7 @@ module.exports = {
         }
       }
 
-      const { coordinates } = shouldMove ? endTile : startTile;
+      const { coordinates } = specialMovement || movedStraightLine ? endTile : startTile;
       // update to db
       const updatedGameState = await models.GameState.findOneAndUpdate({
         _id: ObjectId(gameStateID),
@@ -489,6 +505,11 @@ module.exports = {
     }, { models }) => {
       const gameState = await models.GameState
         .findOne({ _id: ObjectId(gameStateID) });
+      const userIndex = _.findIndex(gameState.users, user => (user.uid === userID));
+
+      if (userIndex === -1) throw Error('User does not exist in game');
+      if (gameState.actions[userIndex].includes(Action.SEARCH)) throw Error('User cannot perform the search action');
+
       const character = _.find(gameState.characters, char => (
         char.coordinates.x === characterCoords.x
         && char.coordinates.y === characterCoords.y
