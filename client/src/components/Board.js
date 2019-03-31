@@ -173,7 +173,7 @@ class Board extends Component {
               selector[selectorObjIndex].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
               selector[selectorObjIndex].visible = (locked && selectorObjIndex > -1) ? true : false;
 
-              let selected = null;
+              let selected = '';
               for (let key in characterList) {
                 if (characterList[key].locked === currentUser.uid) selected = key;
               }
