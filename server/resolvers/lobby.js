@@ -15,55 +15,55 @@ module.exports = {
   },
   Mutation: {
     createLobby: async (_parent, { userID }, { models }) => {
-      const user = await models.User.findOne({ _id: ObjectId(userID) });
+      const user = await models.User.findOne({ uid: userID });
       const initialLobby = {
         users: [user],
       };
 
-      const { acknowledged, _id } = await models.Lobby.insertOne({ ...initialLobby });
+      const { insertedCount, insertedId } = await models.Lobby.insertOne({ ...initialLobby });
 
-      if (!acknowledged) throw Error('Could not create a new lobby');
-      const lobby = models.Lobby.findOne({ _id });
-      pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobby });
-      return models.Lobby.findOne({ _id });
+      if (insertedCount === 0) throw Error('Could not create a new lobby');
+      const lobbies = models.Lobby.find({}).toArray();
+      pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobbies });
+      return models.Lobby.findOne({ _id: insertedId });
     },
     deleteLobby: async (_parent, { lobbyID, userID }, { models }) => {
-      const lobby = await models.Lobby.findOne({ _id: ObjectId(lobbyID), 'user.uid': ObjectId(userID) });
       const res = await models.Lobby.deleteOne({
         _id: ObjectId(lobbyID),
-        'user.uid': ObjectId(userID),
+        'user.uid': userID,
       });
       if (res.deletedCount > 0) {
-        pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobby });
+        const lobbies = models.Lobby.find({}).toArray();
+        pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobbies });
         return true;
       }
       return false;
     },
     joinLobby: async (_parent, { lobbyID, userID }, { models }) => {
-      const user = await models.User.findOne({ _id: ObjectId(userID) });
-      const lobby = await models.Lobby.findOneAndUpdate(
+      const user = await models.User.findOne({ uid: userID });
+      const { value } = await models.Lobby.findOneAndUpdate(
         { _id: ObjectId(lobbyID) },
         { $addToSet: { users: user } },
+        { returnOriginal: false },
       );
-      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: lobby.users, lobbyID });
-      return lobby;
+      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value.users, lobbyID });
+      return value;
     },
     leaveLobby: async (_parent, { lobbyID, userID }, { models }) => {
-      const user = await models.User.findOne({ _id: ObjectId(userID) });
-      const { users } = await models.Lobby.findOneAndUpdate(
+      const user = await models.User.findOne({ uid: userID });
+      const { value } = await models.Lobby.findOneAndUpdate(
         { _id: ObjectId(lobbyID) },
-        { $addToSet: { users: user } },
+        { $pull: { users: user } },
+        { returnOriginal: false },
       );
-      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: users, lobbyID });
-      return _.findIndex(users, u => ObjectId(u._id).equals(userID)) === -1;
+      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value.users, lobbyID });
+      return _.findIndex(value.users, u => u.uid === userID) === -1;
     },
   },
   Subscription: {
     lobbiesUpdated: {
       // Additional event labels can be passed to asyncIterator creation
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([LOBBIES_UPDATED]),
-      ),
+      subscribe: () => pubsub.asyncIterator([LOBBIES_UPDATED]),
     },
     lobbyUsersUpdated: {
       // Additional event labels can be passed to asyncIterator creation
