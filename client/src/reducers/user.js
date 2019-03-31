@@ -23,6 +23,8 @@ const userReducer = (state = initialState, action) => {
       return {
         ...state,
         uid: null,
+        email: null,
+        username: null,
       };
     default:
       return state;
