@@ -1,9 +1,9 @@
 import Firebase from '../config/firebase';
 
-const initialState = {
+export const firebaseInitialState = {
   firebaseInst: new Firebase(),
 };
 
-const firebaseReducer = (state = initialState) => state;
+const firebaseReducer = (state = firebaseInitialState) => state;
 
 export default firebaseReducer;
