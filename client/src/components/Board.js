@@ -474,12 +474,24 @@ class Board extends Component {
     }
   }
 
+  endGame = () => {
+    const { gameStateID } = this.state;
+    const mutation = gql`
+    mutation{
+      deleteGameState (
+        gameStateID: "${gameStateID}",
+      )
+    }
+    `;
+    client().mutate({ mutation });
+    this.props.history.push('/');
+  }
+
   render() {
     let message;
     const {
       itemsClaimed, gameOver, doTick, gameEndTime,
     } = this.state;
-    const { history } = this.props;
 
     if (itemsClaimed) {
       message = <div className="message">All items have been claimed! All vortexes are disabled!</div>;
@@ -541,10 +553,10 @@ class Board extends Component {
             The boys escaped in time and are free to fight a dragon or something!
           </ModalBody>
           <ModalFooter>
-            <Button color="success" className="mb-1" onClick={() => history.push('/')}>Play Again</Button>
+            <Button color="success" className="mb-1" onClick={() => this.endGame()}>Play Again</Button>
           </ModalFooter>
         </Modal>
-        <Timer history={history} endTime={gameEndTime} doTick={doTick} />
+        <Timer endGame={() => this.endGame()} endTime={gameEndTime} doTick={doTick} />
 
         <div className="sidenav">
           {this.state.users.map((user, index) => (

@@ -66,7 +66,7 @@ class Timer extends Component {
             The boys failed to escape in time and got caught by the authorities...
           </ModalBody>
           <ModalFooter>
-            <Button color="danger" className="mb-1" onClick={() => this.props.history.push('/')}>Exit</Button>
+            <Button color="danger" className="mb-1" onClick={() => this.props.endGame()}>Exit</Button>
           </ModalFooter>
         </Modal>
         <div className="timer">
@@ -80,7 +80,7 @@ class Timer extends Component {
 }
 
 Timer.propTypes = {
-  history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
+  endGame: PropTypes.func.isRequired,
 };
 
 export default Timer;
