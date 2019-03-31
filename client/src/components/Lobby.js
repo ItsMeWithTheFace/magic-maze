@@ -63,8 +63,19 @@ class Lobby extends Component {
       this.setState({
         lobbyList: results.data.lobbies,
         loading: results.loading,
-      });
-    });
+      },
+      () => (
+        firebase.auth.onAuthStateChanged((user) => {
+          if (user) {
+            console.log(this.state.lobbyList);
+            this.setState({
+              currentUser: user,
+              currentLobby: this.getCurrentLobby(user.uid),
+            });
+          }
+        })
+      ));
+    })
 
     // update lobby list
     client().subscribe({ query: LOBBY_UPDATED_QUERY })
@@ -72,15 +83,6 @@ class Lobby extends Component {
       this.setState({
         lobbyList: results.data.lobbiesUpdated,
       });
-    });
-
-    this.authListener = firebase.auth.onAuthStateChanged((user) => {
-      if (user) {
-        this.setState({
-          currentUser: user,
-          currentLobby: this.getCurrentLobby(user.uid),
-        });
-      }
     });
   }
 
@@ -113,10 +115,6 @@ class Lobby extends Component {
     }
   }
 
-  componentWillUnmount() {
-    this.authListener();
-  }
-
   getCurrentLobby = (userID) => {
     const { lobbyList } = this.state;
     let res = null;
@@ -139,8 +137,10 @@ class Lobby extends Component {
     `;
 
     if (currentLobby.users[0].uid === currentUser.uid && currentLobby.users.length === 1) {
-      client().mutate({ mutation: mutation }).then((results) => {
-        console.log(results);
+      client().mutate({ mutation: mutation }).then(() => {
+        this.setState({
+          currentLobby: null,
+        });
       });
     } else {
       toast.error('🚫 cannot delete a lobby that still has remaining users', {
@@ -160,9 +160,10 @@ class Lobby extends Component {
     if (currentLobby.users[0].uid === currentUser.uid) {
       this.deleteLobby(lobbyID, userID);
     } else {
-      client().mutate({ mutation: mutation });
+      client().mutate({ mutation: mutation }).then(() => {
+        this.setState({ currentLobby: null });
+      });
     }
-
   }
 
   joinLobby = (lobbyID, userID) => {
@@ -222,28 +223,6 @@ class Lobby extends Component {
     });
   }
 
-  // subscribeToLobby = (lobbyID) => {
-  //   // update current lobby's user list
-  //   client().subscribe({ query: LOBBY_USERS_UPDATED_QUERY(lobbyID), variables: { lobbyID } })
-  //     .forEach((results) => {
-  //       console.log(results);
-  //       this.setState({
-  //         currentLobby: results.data.lobbyUsersUpdated,
-  //       });
-
-  //       console.log(this.state.currentLobby);
-  //     });
-  //   // subscription for when gamestate is created
-  //   client().subscribe({ query: CREATED_GAMESTATE_QUERY(lobbyID), variables: { lobbyID } })
-  //     .forEach((results) => {
-  //       // will return the id and then this should probably be save in redux state
-  //       // then history.push('/board')
-  //       console.log(results);
-  //       this.props.createGame(results.data.createGameState);
-  //       this.props.history.push('/board');
-  //     });
-  // }
-
   createGameState = (lobbyID, userID) => {
     const mutation = gql`
       mutation {
@@ -261,7 +240,6 @@ class Lobby extends Component {
   render() {
     const { loading, lobbyList, currentUser, currentLobby } = this.state;
     const { history } = this.props;
-    console.log(currentLobby);
     const userLobby = currentLobby ? (
       <Card className="bg-dark text-white h-100">
         <CardHeader tag="h3">

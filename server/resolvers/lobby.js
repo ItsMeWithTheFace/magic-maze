@@ -38,7 +38,7 @@ module.exports = {
       const { insertedCount, insertedId } = await models.Lobby.insertOne({ ...initialLobby });
 
       if (insertedCount === 0) throw Error('Could not create a new lobby');
-      const lobbies = models.Lobby.find({}).toArray();
+      const lobbies = await models.Lobby.find({}).toArray();
       pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobbies });
       return models.Lobby.findOne({ _id: insertedId });
     },
@@ -48,7 +48,7 @@ module.exports = {
         'users.uid': userID,
       });
       if (res.deletedCount > 0) {
-        const lobbies = models.Lobby.find({}).toArray();
+        const lobbies = await models.Lobby.find({}).toArray();
         pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobbies });
         return true;
       }
