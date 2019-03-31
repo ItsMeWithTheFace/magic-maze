@@ -22,14 +22,14 @@ const queries = gql`
 const mutations = gql`
   type Mutation {
     # GameState
-    createGameState(lobbyID: ID!, users: [UserInput!]!): ID!
+    createGameState(lobbyID: ID!): ID!
     deleteGameState(gameStateID: ID!): Boolean
   
     # Character
     lockCharacter(gameStateID: ID!, userID: String!, characterColour: String!): Character!
     moveCharacter(
       gameStateID: ID!,
-      userID: String,
+      userID: String!,
       characterColour: String!,
       endTileCoords: CoordinatesInput!,
     ): Character!

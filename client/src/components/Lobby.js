@@ -98,7 +98,6 @@ class Lobby extends Component {
       // update current lobby's user list
       lobbySub = client().subscribe({ query: LOBBY_USERS_UPDATED_QUERY(lobbyID), variables: { lobbyID } })
         .forEach((results) => {
-          console.log(results);
           this.setState({
             currentLobby: results.data.lobbyUsersUpdated,
           });
@@ -167,7 +166,7 @@ class Lobby extends Component {
   }
 
   joinLobby = (lobbyID, userID) => {
-    const { currentUser, currentLobby } = this.state;
+    const { lobbyList, currentUser, currentLobby } = this.state;
 
     const mutation = gql`
       mutation {
@@ -223,18 +222,19 @@ class Lobby extends Component {
     });
   }
 
-  createGameState = (lobbyID, userID) => {
+  createGameState = (lobbyID) => {
     const mutation = gql`
       mutation {
-        createGameState(lobbyID: "${lobbyID}", userID: "${userID}")
+        createGameState(lobbyID: "${lobbyID}")
       }
     `;
-    client().mutate({ mutation: mutation }).then((results) => {
+    console.log(mutation);
+    client().mutate({ mutation }).then((results) => {
         // will return the id and then this should probably be save in redux state
         // then history.push('/board')
         this.props.createGame(results.data.createGameState);
         this.props.history.push('/board');
-    });
+    }).catch((err) => console.error(err));
   }
 
   render() {
@@ -261,7 +261,7 @@ class Lobby extends Component {
             color="success"
             className="mr-2 mb-1"
             disabled={currentLobby.users.length < 4}
-            onClick={() => this.createGameState(currentLobby._id, currentUser.uid)}>
+            onClick={() => this.createGameState(currentLobby._id)}>
             Start Game
           </Button>
           <Button color="danger" className="mb-1" onClick={() => this.leaveLobby(currentLobby._id, currentUser.uid)}>Leave Lobby</Button>

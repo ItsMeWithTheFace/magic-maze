@@ -30,29 +30,29 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: async ({ req }) => {
-    if (!req || !req.headers) {
-      return {}; // websockets
-    }
+    // if (!req || !req.headers) {
+    //   return {}; // websockets
+    // }
 
-    let token;
-    if (req && req.headers && req.headers.authorization) {
-      token = req.headers.authorization;
-    } else {
-      throw new AuthenticationError('Authorization token not provided');
-    }
+    // let token;
+    // if (req && req.headers && req.headers.authorization) {
+    //   token = req.headers.authorization;
+    // } else {
+    //   throw new AuthenticationError('Authorization token not provided');
+    // }
 
-    token = _.replace(token, 'Bearer ', '');
+    // token = _.replace(token, 'Bearer ', '');
 
-    const decodedToken = await firebaseApp
-      .auth()
-      .verifyIdToken(token);
+    // const decodedToken = await firebaseApp
+    //   .auth()
+    //   .verifyIdToken(token);
 
-    // user should be signed up
-    const user = await models.User.findOne({ uid: decodedToken.uid });
-    if (!user) throw new AuthenticationError('User does not exist');
+    // // user should be signed up
+    // const user = await models.User.findOne({ uid: decodedToken.uid });
+    // if (!user) throw new AuthenticationError('User does not exist');
 
     return {
-      user,
+      // user,
       models,
     };
   },

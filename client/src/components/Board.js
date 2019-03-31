@@ -2,6 +2,7 @@ import gql from 'graphql-tag';
 import React, { Component } from 'react';
 import Viewport from 'pixi-viewport';
 import * as PIXI from 'pixi.js';
+import { connect } from 'react-redux';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
@@ -22,14 +23,12 @@ import {
   ITEMS_CLAIMED_QUERY,
 } from '../common/queries';
 
-
 // constants
 const SCALE = 4;
 const TILE_SIZE = 16;
 const MAZE_SIZE = 64;
 const X_OFFSET = 350;
 const Y_OFFSET = 80;
-const GAME_ID = '5c9fd4f2dfc68c2c5710752e';
 
 // fontawesome
 library.add(faSearch);
@@ -63,13 +62,17 @@ class Board extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selected: '',               // selected character colour (will refactor this later)
-      players: [],                // character objects
-      selector: null,             // cross-hair object
-      gameEndTime: new Date(),    // end time (for timer)
+      currentUser: null,
+      gameStateID: null,
+      selected: '',               // selected character colour
+      characters: [],             // character objects
+      selector: [],               // selector Objects
+      gameEndTime: new Date(new Date().getTime() + 3 * 60000),    // end time (for timer)
       itemsClaimed: false,        // whether or not all the items have been claimed
       doTick: true,               // whether or not the timer should tick
       gameOver: false,            // whether or not the game is done or not
+      users: [],
+      actions: [],
     };
 
     viewport = new Viewport({
@@ -98,91 +101,116 @@ class Board extends Component {
     artifactContainer = new PIXI.Container();
   }
 
-  // serve board
   componentDidMount() {
-    document.getElementById('board').appendChild(app.view);
-    document.body.style.overflow = 'hidden';
-    PIXI.Loader.shared.reset();
-    PIXI.Loader.shared
-      .add(spriteList)
-      .load(this.setup);
+    const { gameStateID } = this.state;
+    const { firebase } = this.props;
 
-    client().subscribe({ query: ENDTIME_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
-      .forEach(time => this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) }));
+    this.authListener = firebase.auth.onAuthStateChanged((user) => {
+      if (user) {
+        this.setState({
+          currentUser: user
+        });
+      }
+    })
+  }
 
-    // get colour and set character state
-    client().subscribe({ query: CHARACTER_UPDATED_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
-      .forEach((results) => {
-        const { players, selector } = this.state;
+  componentDidUpdate(prevProps, prevState) {
+    if ((prevProps.gameStateID !== this.props.gameStateID && this.state.currentUser)
+      || this.props.gameStateID && prevState.currentUser !== this.state.currentUser) {
+      
+      this.setState({ gameStateID: this.props.gameStateID },
+        () => {
+          console.log(this.state);
+          const { gameStateID } = this.state;
+          document.getElementById('board').appendChild(app.view);
+          document.body.style.overflow = 'hidden';
+          PIXI.Loader.shared.reset();
+          PIXI.Loader.shared
+            .add(spriteList)
+            .load(this.setup);
 
-        // update selected character
-        const colour = results.data.characterUpdated.colour;
+          client().subscribe({ query: ENDTIME_QUERY(gameStateID), variables: { gameStateID } })
+            .forEach(time => this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) }));
 
-        if (results.data.characterUpdated.itemClaimed) {
-          if (!players[colour].itemClaimed) {
-            toast.success(`👌🏻 ${colour} item claimed`, {
-              position: 'bottom-right',
+          // get colour and set character state
+          client().subscribe({ query: CHARACTER_UPDATED_QUERY(gameStateID), variables: { gameStateID } })
+            .forEach((results) => {
+              const { characters, selector } = this.state;
+
+              const { colour, locked } = results.data.characterUpdated;
+
+              if (results.data.characterUpdated.itemClaimed) {
+                if (!characters[colour].itemClaimed) {
+                  toast.success(`👌🏻 ${colour} item claimed`, {
+                    position: 'bottom-right',
+                  });
+                }
+              }
+
+              // update character position
+              const characterList = characters;
+              characterList[colour].x = results.data.characterUpdated.coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
+              characterList[colour].y = results.data.characterUpdated.coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
+              characterList[colour].itemClaimed = results.data.characterUpdated.itemClaimed;
+
+              // update selector position
+              const selectorObjIndex = selector.findIndex((select) => select.colour === colour);
+              selector[selectorObjIndex] = (!locked && selectorObjIndex > -1)
+                ? { ...selector[selectorObjIndex], x: characterList[colour].x, y: characterList[colour].y }
+                : { ...selector[selectorObjIndex], x: null, y: null };
+
+              this.setState({
+                characters: characterList,
+                selector,
+              });
+            });
+
+          // set add mazeTile
+          client().subscribe({ query: MAZETILE_UPDATED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+            .forEach((results) => {
+              const newTileTexture = new PIXI.Texture(
+                PIXI.utils.TextureCache[require(`../assets/maze/${results.data.mazeTileAdded.spriteID}.png`)],
+                new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
+              );
+              const newTile = new PIXI.Sprite(newTileTexture);
+              // adding a pivot affects the position of the tile
+              // must offset by (WIDTH / 2) * SCALE to counteract this
+              newTile.x = results.data.mazeTileAdded.cornerCoordinates.x * (TILE_SIZE * SCALE) + X_OFFSET + (MAZE_SIZE / 2) * 4;
+              newTile.y = results.data.mazeTileAdded.cornerCoordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET + (MAZE_SIZE / 2) * 4;
+              // add pivot in the centre of the tile
+              newTile.pivot.set(MAZE_SIZE / 2);
+              newTile.scale.set(SCALE, SCALE);
+              newTile.angle = results.data.mazeTileAdded.orientation * (-90);
+              mazeContainer.addChild(newTile);
+            });
+
+          // display message if all items have been claimed
+          client().subscribe({ query: ITEMS_CLAIMED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+            .forEach(() => {
+              toast.info('🙌🏻 all items have been claimed! all vortexes disabled! time to escape!', {
+                position: 'bottom-right',
+                autoClose: false,
+              });
+              this.setState({
+                itemsClaimed: true,
+              });
+            });
+
+          // end the game if true
+          client().subscribe({ query: END_GAME_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+            .forEach(() => {
+              this.setState({
+                doTick: false,
+                gameOver: true,
+              });
             });
           }
-        }
+        )
+    }
+  }
 
-        // update character position
-        const characterList = players;
-        characterList[colour].x = results.data.characterUpdated.coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
-        characterList[colour].y = results.data.characterUpdated.coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
-        characterList[colour].itemClaimed = results.data.characterUpdated.itemClaimed;
-
-        // update selector position
-        const selectorObj = selector;
-        selectorObj.x = characterList[colour].x;
-        selectorObj.y = characterList[colour].y;
-
-        this.setState({
-          selected: colour,
-          players: characterList,
-          selector: selectorObj,
-        });
-      });
-
-    // set add mazeTile
-    client().subscribe({ query: MAZETILE_UPDATED_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
-      .forEach((results) => {
-        const newTileTexture = new PIXI.Texture(
-          PIXI.utils.TextureCache[require(`../assets/maze/${results.data.mazeTileAdded.spriteID}.png`)],
-          new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
-        );
-        const newTile = new PIXI.Sprite(newTileTexture);
-        // adding a pivot affects the position of the tile
-        // must offset by (WIDTH / 2) * SCALE to counteract this
-        newTile.x = results.data.mazeTileAdded.cornerCoordinates.x * (TILE_SIZE * SCALE) + X_OFFSET + (MAZE_SIZE / 2) * 4;
-        newTile.y = results.data.mazeTileAdded.cornerCoordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET + (MAZE_SIZE / 2) * 4;
-        // add pivot in the centre of the tile
-        newTile.pivot.set(MAZE_SIZE / 2);
-        newTile.scale.set(SCALE, SCALE);
-        newTile.angle = results.data.mazeTileAdded.orientation * (-90);
-        mazeContainer.addChild(newTile);
-      });
-
-    // display message if all items have been claimed
-    client().subscribe({ query: ITEMS_CLAIMED_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
-      .forEach(() => {
-        toast.info('🙌🏻 all items have been claimed! all vortexes disabled! time to escape!', {
-          position: 'bottom-right',
-          autoClose: false,
-        });
-        this.setState({
-          itemsClaimed: true,
-        });
-      });
-
-    // end the game if true
-    client().subscribe({ query: END_GAME_QUERY(GAME_ID), variables: { gameStateID: GAME_ID } })
-      .forEach(() => {
-        this.setState({
-          doTick: false,
-          gameOver: true,
-        });
-      });
+  componentWillUnmount() {
+    this.this.authListener();
   }
 
   /**
@@ -190,11 +218,13 @@ class Board extends Component {
    */
   setup = () => {
     const {
-      players,
+      characters,
+      gameStateID,
+      actions,
     } = this.state;
     const query = gql`
       {
-        gameState(gameStateID: "${GAME_ID}") {
+        gameState(gameStateID: "${gameStateID}") {
           mazeTiles {
             cornerCoordinates {
               x
@@ -213,20 +243,29 @@ class Board extends Component {
               y
             }
           }
+          users {
+            uid
+            username
+          }
+          actions
         }
       }
     `;
     client().query({ query }).then((results) => {
+      console.log(results);
+
       this.setState({
         gameEndTime: new Date(results.data.gameState.endTime),
         itemsClaimed: results.data.gameState.allItemsClaimed,
+        users: results.data.gameState.users,
+        actions,
       });
 
       // render and create characters
-      players.red = this.createCharacter(3, results.data.gameState.characters.find(x => x.colour === 'red'));
-      players.purple = this.createCharacter(0, results.data.gameState.characters.find(x => x.colour === 'purple'));
-      players.blue = this.createCharacter(1, results.data.gameState.characters.find(x => x.colour === 'blue'));
-      players.green = this.createCharacter(2, results.data.gameState.characters.find(x => x.colour === 'green'));
+      characters.red = this.createCharacter(3, results.data.gameState.characters.find(x => x.colour === 'red'));
+      characters.purple = this.createCharacter(0, results.data.gameState.characters.find(x => x.colour === 'purple'));
+      characters.blue = this.createCharacter(1, results.data.gameState.characters.find(x => x.colour === 'blue'));
+      characters.green = this.createCharacter(2, results.data.gameState.characters.find(x => x.colour === 'green'));
 
       // render initial maze tile
       const startTileTexture = new PIXI.Texture(
@@ -257,15 +296,36 @@ class Board extends Component {
       // add actors to containers
       // (we do this to manipulate the z-index properly)
       mazeContainer.addChild(startTile);
-      characterContainer.addChild(players.red);
-      characterContainer.addChild(players.purple);
-      characterContainer.addChild(players.blue);
-      characterContainer.addChild(players.green);
+      characterContainer.addChild(characters.red);
+      characterContainer.addChild(characters.purple);
+      characterContainer.addChild(characters.blue);
+      characterContainer.addChild(characters.green);
+      
+      // initialize all the selectors
+      const selectorTexture = new PIXI.Texture(
+        PIXI.utils.TextureCache[spritesheet],
+        new PIXI.Rectangle(5 * TILE_SIZE, 4 * TILE_SIZE, TILE_SIZE, TILE_SIZE),
+      );
+      let selectorList = [];
+      characters.forEach(character => {
+        const selectorObject = new PIXI.Sprite(selectorTexture);
+        selectorObject.colour = character.colour;
+        selectorObject.x = null;
+        selectorObject.y = null;
+        selectorObject.scale.set(SCALE, SCALE);
+        artifactContainer.addChild(selectorObject);
+        selectorList.push(selectorObject);
+      });
+
+      this.setState({
+        selector: selectorList,
+      });
 
       // add containers to viewport
       // (cannot add to stage otherwise scrolling will not work)
       viewport.addChild(mazeContainer);
       viewport.addChild(characterContainer);
+      viewport.addChild(artifactContainer);
     });
   }
 
@@ -279,11 +339,11 @@ class Board extends Component {
    * @param {*} e click event
    */
   move = (e) => {
-    const { selected, players } = this.state;
+    const { selected, characters, gameStateID } = this.state;
     if (selected) {
-      const endX = players[selected].x + Math.floor((e.world.x - players[selected].x)
+      const endX = characters[selected].x + Math.floor((e.world.x - characters[selected].x)
       / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
-      const endY = players[selected].y + Math.floor((e.world.y - players[selected].y)
+      const endY = characters[selected].y + Math.floor((e.world.y - characters[selected].y)
       / (TILE_SIZE * SCALE)) * (TILE_SIZE * SCALE);
 
       const deltaX = (endX - X_OFFSET) / (TILE_SIZE * SCALE);
@@ -291,8 +351,8 @@ class Board extends Component {
       const mutation = gql`
         mutation {
           moveCharacter(
-            gameStateID: "${GAME_ID}",
-            userID: null,
+            gameStateID: "${gameStateID}",
+            userID: "${this.state.currentUser.uid}",
             characterColour: "${selected}",
             endTileCoords:{ x: ${deltaX}, y: ${deltaY} },
           ) {
@@ -305,7 +365,9 @@ class Board extends Component {
           }
         }
       `;
-      client().mutate({ mutation });
+      client().mutate({ mutation }).then((results) => {
+        this.setState({ selected: '' });
+      });
     }
   }
 
@@ -316,7 +378,7 @@ class Board extends Component {
    */
   createCharacter = (offset, data) => {
     const {
-      selected,
+      gameStateID,
     } = this.state;
 
     const texture = new PIXI.Texture(
@@ -331,46 +393,96 @@ class Board extends Component {
     character.interactive = true;
     // sprite handling can only be caught using 'click'
     // (this is different from the viewport for some reason...)
+
+    const selectorTexture = new PIXI.Texture(
+      PIXI.utils.TextureCache[spritesheet],
+      new PIXI.Rectangle(5 * TILE_SIZE, 4 * TILE_SIZE, TILE_SIZE, TILE_SIZE),
+    );
+    const selectorObject = new PIXI.Sprite(selectorTexture);
+    selectorObject.colour = character.colour;
+    selectorObject.x = null;
+    selectorObject.y = null;
+    selectorObject.scale.set(SCALE, SCALE);
+    const newSelector = this.state.selector;
+    newSelector.push(selectorObject);
+    this.setState({
+      selector: newSelector,
+    });
     character.on('click', () => {
       // initialize selector sprite
-      const selectorTexture = new PIXI.Texture(
-        PIXI.utils.TextureCache[spritesheet],
-        new PIXI.Rectangle(5 * TILE_SIZE, 4 * TILE_SIZE, TILE_SIZE, TILE_SIZE),
-      );
-      const selectorObject = new PIXI.Sprite(selectorTexture);
-      selectorObject.x = character.x;
-      selectorObject.y = character.y;
-      selectorObject.scale.set(SCALE, SCALE);
-      this.setState({
-        selector: selectorObject,
-      });
-
-      // if there is nothing selected
-      if (selected === '') {
-        // add the selector icon
-        artifactContainer.addChild(selectorObject);
-        viewport.addChild(artifactContainer);
-      // if swapping selected character
-      } else if (selected !== data.colour) {
-        // remove all selectors
-        for (let i = 0; i < artifactContainer.children.length; i += 1) {
-          artifactContainer.removeChildAt(i);
+      // const selectorTexture = new PIXI.Texture(
+      //   PIXI.utils.TextureCache[spritesheet],
+      //   new PIXI.Rectangle(5 * TILE_SIZE, 4 * TILE_SIZE, TILE_SIZE, TILE_SIZE),
+      // );
+      // const selectorObject = new PIXI.Sprite(selectorTexture);
+      // selectorObject.x = character.x;
+      // selectorObject.y = character.y;
+      // selectorObject.scale.set(SCALE, SCALE);
+      // this.setState({
+      //   selector: selectorObject,
+      // });
+      
+      const mutation = gql`
+        mutation {
+          lockCharacter(
+            gameStateID: "${gameStateID}",
+            characterColour: "${character.colour}",
+            userID: "${this.state.currentUser.uid}",
+          ) {
+            colour
+            locked
+            coordinates {
+              x
+              y
+            }
+          }
         }
-        // add the new selector
-        artifactContainer.addChild(selectorObject);
-        viewport.addChild(artifactContainer);
-      } else {
-        // remove all selectors
-        for (let i = 0; i < artifactContainer.children.length; i += 1) {
-          artifactContainer.removeChildAt(i);
-        }
+      `;
+      console.log(this.state);
+      console.log(character);
+      if (!character.locked || character.locked === this.props.currentUser.uid) {
+        client().mutate({ mutation }).then((results) => {
+          // update colour, x, y
+          console.log(this.state);
+          const { characters, selector } = this.state;
+          console.log(characters);
+          console.log(selector);
+          const { locked } = results.data.lockCharacter;
+          const selected = locked ? results.data.lockCharacter.colour : null;
+          const selectorObjIndex = selector.findIndex((select) => select.colour === selected);
+          selector[selectorObjIndex] = (!locked && selectorObjIndex > -1)
+            ? { ...selector[selectorObjIndex], x: characters[selected].x, y: characters[character.colour].y }
+            : { ...selector[selectorObjIndex], x: null, y: null };
+          this.setState({ selected, selector });          
+        });
       }
+
+      // // if there is nothing selected
+      // if (selected === '') {
+      //   // add the selector icon
+      //   artifactContainer.addChild(selectorObject);
+      //   viewport.addChild(artifactContainer);
+      // // if swapping selected character
+      // } else if (selected !== data.colour) {
+      //   // remove all selectors
+      //   for (let i = 0; i < artifactContainer.children.length; i += 1) {
+      //     artifactContainer.removeChildAt(i);
+      //   }
+      //   // add the new selector
+      //   artifactContainer.addChild(selectorObject);
+      //   viewport.addChild(artifactContainer);
+      // } else {
+      //   // remove all selectors
+      //   for (let i = 0; i < artifactContainer.children.length; i += 1) {
+      //     artifactContainer.removeChildAt(i);
+      //   }
+      // }
 
       // set selected character
       // NOTE: may need to adjust the logic game logic for freeing selected characters
-      this.setState({
-        selected: selected === '' || selected !== data.colour ? data.colour : '',
-      });
+      // this.setState({
+      //   selected: selected === '' || selected !== data.colour ? data.colour : '',
+      // });
     });
     return character;
   }
@@ -379,15 +491,16 @@ class Board extends Component {
    * search for a new maze tile upon encountering a search tile
    */
   search = () => {
-    const { selected, players } = this.state;
+    const { selected, characters, gameStateID } = this.state;
 
     if (selected) {
-      const x = (players[selected].x - X_OFFSET) / (TILE_SIZE * SCALE);
-      const y = (players[selected].y - Y_OFFSET) / (TILE_SIZE * SCALE);
+      const x = (characters[selected].x - X_OFFSET) / (TILE_SIZE * SCALE);
+      const y = (characters[selected].y - Y_OFFSET) / (TILE_SIZE * SCALE);
       const mutation = gql`
         mutation {
           searchAction (
-            gameStateID: "${GAME_ID}",
+            gameStateID: "${gameStateID}",
+            userID: "${this.state.currentUser.uid}",
             characterCoords: { x: ${x}, y: ${y} },
           ) {
             spriteID
@@ -400,7 +513,9 @@ class Board extends Component {
         }
       `;
       console.log(mutation);
-      client().mutate({ mutation });
+      client().mutate({ mutation }).then((results) => {
+        this.setState({ selected: '' });
+      });
     }
   }
 
@@ -433,10 +548,7 @@ class Board extends Component {
         </Modal>
         <Timer history={history} endTime={gameEndTime} doTick={doTick} />
         <div className="sidenav">
-          <div className="player">kev</div>
-          <div className="player">rakin</div>
-          <div className="player">luc</div>
-          <div className="player">not-luc</div>
+          {this.state.users.map(user => <div key={user.uid} className="player">user.username</div>)}
           <button className="btn btn-lg btn-primary" type="button" onClick={() => this.search()}>
             <FontAwesomeIcon icon="search" />
           </button>
@@ -448,4 +560,9 @@ class Board extends Component {
   }
 }
 
-export default Board;
+const mapStateToProps = state => ({
+  firebase: state.firebaseReducer.firebaseInst,
+  gameStateID: state.gameStateReducer.gameStateID,
+});
+
+export default connect(mapStateToProps)(Board);

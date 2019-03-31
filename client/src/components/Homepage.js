@@ -50,7 +50,6 @@ class Homepage extends Component {
       <div className="col" style={{ textAlign: 'center' }}>
         <Button color="primary" size="lg" onClick={() => history.push('/lobby')}>Find a Lobby</Button>
         <Button color="danger" size="lg" className="ml-4" onClick={() => this.signOut()}>Sign Out</Button>
-        <Button color="success" size="lg" className="ml-4" onClick={() => history.push('/board')}>Play Singleplayer</Button>
       </div>
     ) : (
       <div className="col" style={{ textAlign: 'center' }}>
