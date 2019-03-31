@@ -7,6 +7,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import idx from 'idx';
 import gql from 'graphql-tag';
 import client from '../common/utils';
 import './Lobby.css';
@@ -86,33 +87,16 @@ class Lobby extends Component {
     });
   }
 
-  componentDidUpdate(prevState) {
-    const { currentLobby } = this.state;
-    if (prevState.currentLobby) {
-      lobbySub.unsubscribe();
-      gameSub.unsubscribe();
-    }
+  // componentDidUpdate(prevProps, prevState) {
+  //   const currentLobbyID = idx(this.state, _ => _.currentLobby._id);
+  //   const prevLobbyID = idx(prevState, _ => _.currentLobby._id);
 
-    if (currentLobby) {
-      const lobbyID = currentLobby._id;
-      // update current lobby's user list
-      lobbySub = client().subscribe({ query: LOBBY_USERS_UPDATED_QUERY(lobbyID), variables: { lobbyID } })
-        .forEach((results) => {
-          this.setState({
-            currentLobby: results.data.lobbyUsersUpdated,
-          });
-        });
-      // subscription for when gamestate is created
-      gameSub = client().subscribe({ query: CREATED_GAMESTATE_QUERY(lobbyID), variables: { lobbyID } })
-        .forEach((results) => {
-          // will return the id and then this should probably be save in redux state
-          // then history.push('/board')
-          console.log(results);
-          this.props.createGame(results.data.createGameState);
-          this.props.history.push('/board');
-        });
-    }
-  }
+  //   if (currentLobbyID && prevLobbyID !== currentLobbyID) {
+  //     const lobbyID = currentLobbyID;
+  //     // update current lobby's user list
+
+  //   }
+  // }
 
   getCurrentLobby = (userID) => {
     const { lobbyList } = this.state;
@@ -121,9 +105,30 @@ class Lobby extends Component {
     lobbyList.forEach(lobby => {
       if (lobby.users.some(x => x.uid === userID)) {
         res = lobby;
+        this.subscribeToLobby(lobby._id);
       }
     });
     return res;
+  }
+
+  subscribeToLobby = (lobbyID) => {
+    lobbySub = client().subscribe({ query: LOBBY_USERS_UPDATED_QUERY(lobbyID), variables: { lobbyID } })
+      .subscribe((results) => {
+        this.setState({
+          currentLobby: results.data.lobbyUsersUpdated,
+        });
+      });
+    // subscription for when gamestate is created
+    gameSub = client().subscribe({ query: CREATED_GAMESTATE_QUERY(lobbyID), variables: { lobbyID } })
+      .subscribe((results) => {
+        this.props.createGame(results.data.createGameState);
+        this.props.history.push('/board');
+      });
+  }
+
+  unsubscribeToLobby = () => {
+    lobbySub.unsubscribe();
+    gameSub.unsubscribe();
   }
 
   deleteLobby = (lobbyID, userID) => {
@@ -140,6 +145,7 @@ class Lobby extends Component {
         this.setState({
           currentLobby: null,
         });
+        this.unsubscribeToLobby();
       });
     } else {
       toast.error('🚫 cannot delete a lobby that still has remaining users', {
@@ -148,25 +154,28 @@ class Lobby extends Component {
     }
   }
 
-  leaveLobby = (lobbyID, userID) => {
+  leaveLobby = (lobbyID, userID, callback) => {
     const { currentLobby, currentUser } = this.state;
 
     const mutation = gql`
       mutation {
         leaveLobby(userID: "${userID}", lobbyID: "${lobbyID}")
       }
-    `
+    `;
     if (currentLobby.users[0].uid === currentUser.uid) {
       this.deleteLobby(lobbyID, userID);
     } else {
       client().mutate({ mutation: mutation }).then(() => {
         this.setState({ currentLobby: null });
+        this.unsubscribeToLobby();
+        callback();
       });
     }
   }
 
   joinLobby = (lobbyID, userID) => {
-    const { lobbyList, currentUser, currentLobby } = this.state;
+    const { currentUser } = this.state;
+    const currentLobbyID = idx(this.state, _ => _.currentLobby._id);
 
     const mutation = gql`
       mutation {
@@ -179,31 +188,35 @@ class Lobby extends Component {
         }
       }
     `;
-
-    if (currentLobby) {
-      if (currentLobby._id === lobbyID) {
-        toast.error('🚫 cannot join a lobby you are already in', {
-          position: 'bottom-right',
-        });
+    if (currentLobbyID === lobbyID) {
+      toast.error('🚫 cannot join a lobby you are already in', {
+        position: 'bottom-right',
+      });
+    } else {
+      if (currentLobbyID) {
+        this.leaveLobby(currentLobbyID, currentUser.uid, () => (
+          client().mutate({ mutation: mutation }).then((results) => {
+            this.setState({
+              currentLobby: results.data.joinLobby,
+            });
+            this.subscribeToLobby(results.data.joinLobby._id);
+          })
+        ));
       } else {
-        this.leaveLobby(currentLobby._id, currentUser.uid);
         client().mutate({ mutation: mutation }).then((results) => {
           this.setState({
             currentLobby: results.data.joinLobby,
           });
+          this.subscribeToLobby(results.data.joinLobby._id);
         });
       }
-    } else {
-      client().mutate({ mutation: mutation }).then((results) => {
-        this.setState({
-          currentLobby: results.data.joinLobby,
-        });
-      });
     }
-
   }
 
   createLobby = (userID) => {
+    const { lobbyList, currentUser } = this.state;
+    const currentLobbyID = idx(this.state, _ => _.currentLobby._id);
+    
     const mutation = gql`
       mutation {
         createLobby(userID: "${userID}") {
@@ -215,11 +228,23 @@ class Lobby extends Component {
         }
       }
     `;
-    client().mutate({ mutation: mutation }).then((results) => {
-      this.setState({
-        currentLobby: results.data.createLobby,
+    if (currentLobbyID) {
+      this.leaveLobby(currentLobbyID, currentUser.uid, () => (
+        client().mutate({ mutation: mutation }).then((results) => {
+          this.setState({
+            currentLobby: results.data.createLobby,
+          });
+          this.subscribeToLobby(results.data.createLobby._id);
+        })
+      ));
+    } else {
+      client().mutate({ mutation: mutation }).then((results) => {
+        this.setState({
+          currentLobby: results.data.createLobby,
+        });
+        this.subscribeToLobby(results.data.createLobby._id);
       });
-    });
+    }
   }
 
   createGameState = (lobbyID) => {
