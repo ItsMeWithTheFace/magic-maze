@@ -12,6 +12,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import PropTypes from 'prop-types';
 import { signupUser, loginUser } from '../actions/user';
+import { addUser } from '../common/api';
 
 library.add([
   faUser,
@@ -42,10 +43,8 @@ class SignUp extends Component {
       .doSignInWithEmailAndPassword(email, password)
       .then(async () => {
         const user = firebase.auth.currentUser;
-        const token = await user.getIdToken();
 
         loginUserProp({
-          token,
           username: user.displayName,
           email: user.email,
           uid: user.uid,
@@ -65,19 +64,20 @@ class SignUp extends Component {
       .doCreateUserWithEmailAndPassword(email, password)
       .then(async () => {
         const user = firebase.auth.currentUser;
-        const token = await user.getIdToken();
 
         if (user) {
           await user.updateProfile({
             displayName: username,
           });
 
-          signupUserProp({
-            token,
-            username: user.displayName,
-            email: user.email,
+          const userInfo = {
             uid: user.uid,
-          });
+            email: user.email,
+            username,
+          };
+
+          signupUserProp(userInfo);
+          addUser(userInfo);
 
           history.push('/');
         }
