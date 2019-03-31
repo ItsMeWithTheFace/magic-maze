@@ -148,7 +148,7 @@ class Board extends Component {
           // get colour and set character state
           client().subscribe({ query: CHARACTER_UPDATED_QUERY(gameStateID), variables: { gameStateID } })
             .forEach((results) => {
-              const { characters, selector } = this.state;
+              const { characters, selector, currentUser } = this.state;
 
               const { colour, coordinates, locked, itemClaimed } = results.data.characterUpdated;
 
@@ -165,6 +165,7 @@ class Board extends Component {
               characterList[colour].x = coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
               characterList[colour].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
               characterList[colour].itemClaimed = itemClaimed;
+              characterList[colour].locked = locked;
 
               // update selector position
               const selectorObjIndex = selector.findIndex((select) => select.colour === colour);
@@ -172,7 +173,12 @@ class Board extends Component {
               selector[selectorObjIndex].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
               selector[selectorObjIndex].visible = (locked && selectorObjIndex > -1) ? true : false;
 
+              let selected = null;
+              for (let key in characterList) {
+                if (characterList[key].locked === currentUser.uid) selected = key;
+              }
               this.setState({
+                selected,
                 characters: characterList,
                 selector,
               });
@@ -379,7 +385,7 @@ class Board extends Component {
         }
       `;
       client().mutate({ mutation }).then((results) => {
-        this.setState({ selected: '' });
+        console.log(results.data.moveCharacter);
       });
     }
   }
@@ -426,20 +432,22 @@ class Board extends Component {
           }
         }
       `;
-      if ((!character.locked || character.locked === this.props.currentUser.uid)
-      && (selected === '' || selected === character.colour)) {
-        client().mutate({ mutation }).then((results) => {
-          // update colour, x, y
-          const { selector } = this.state;
-          const { colour, coordinates, locked } = results.data.lockCharacter;
-          const newSelected = locked === currentUser.uid ? colour : '';
-          const selectorObjIndex = selector.findIndex((select) => select.colour === colour);
-          selector[selectorObjIndex].x = coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
-          selector[selectorObjIndex].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
-          selector[selectorObjIndex].visible = locked ? true : false;
-          this.setState({ selected: newSelected, selector });
-        });
-      }
+      client().mutate({ mutation }).then((results) => {
+        // update colour, x, y
+        console.log(results.data.lockCharacter);
+
+        // const { selector, characters } = this.state;
+        // const { colour, coordinates, locked } = results.data.lockCharacter;
+        // const newSelected = locked === currentUser.uid ? colour : '';
+        // const selectorObjIndex = selector.findIndex((select) => select.colour === colour);
+        // selector[selectorObjIndex].x = coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
+        // selector[selectorObjIndex].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
+        // selector[selectorObjIndex].visible = locked ? true : false;
+        // characters[colour].locked = locked;
+
+        // this.setState({ selected: newSelected, selector, characters });
+      });
+
     });
     return character;
   }
@@ -486,7 +494,6 @@ class Board extends Component {
     if (itemsClaimed) {
       message = <div className="message">All items have been claimed! All vortexes are disabled!</div>;
     }
-    console.log(this.state);
 
     return (
       <div>

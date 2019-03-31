@@ -624,7 +624,16 @@ module.exports = {
       });
 
       const character = _.find(characters, char => char.colour === characterColour);
-      character.locked = character.locked ? null : userID;
+      const hasAnotherLock = _.find(characters, char => char.locked === userID);
+      if (hasAnotherLock > -1) return character;
+
+      if (!character.locked) {
+        character.locked = userID;
+      } else if (character.locked === userID) {
+        character.locked = null;
+      } else {
+        return character;
+      }
 
       const updatedGameState = await models.GameState.findOneAndUpdate({
         _id: ObjectId(gameStateID),
@@ -633,14 +642,12 @@ module.exports = {
       {
         $set: {
           'characters.$.locked': character.locked,
-        }
+        },
       },
       { returnOriginal: false });
-      console.log(updatedGameState);
 
       const updatedChar = _.find(updatedGameState.value.characters,
         char => char.colour === characterColour);
-      console.log(updatedChar);
 
       pubsub.publish(CHARACTER_LOCK,
         { characterUpdated: updatedChar, gameStateID });
