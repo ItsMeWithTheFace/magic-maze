@@ -26,20 +26,20 @@ const mutations = gql`
     deleteGameState(gameStateID: ID!): Boolean
   
     # Character
-    lockCharacter(gameStateID: ID!, userID: ID!, characterColour: String!): Character!
+    lockCharacter(gameStateID: ID!, userID: String!, characterColour: String!): Character!
     moveCharacter(
       gameStateID: ID!,
-      userID: ID,
+      userID: String,
       characterColour: String!,
       endTileCoords: CoordinatesInput!,
     ): Character!
-    searchAction(gameStateID: ID!, userID: ID, characterCoords: CoordinatesInput!): MazeTile!
+    searchAction(gameStateID: ID!, userID: String, characterCoords: CoordinatesInput!): MazeTile!
   
     # Lobby
     createLobby(userID: ID!): Lobby!
-    deleteLobby(lobbyID: ID!, userID: ID!): Boolean!
-    joinLobby(lobbyID: ID!, userID: ID!): Lobby!
-    leaveLobby(lobbyID: ID!, userID: ID!): Boolean!
+    deleteLobby(lobbyID: ID!, userID: String!): Boolean!
+    joinLobby(lobbyID: ID!, userID: String!): Lobby!
+    leaveLobby(lobbyID: ID!, userID: String!): Boolean!
 
   }
 `;
@@ -59,7 +59,7 @@ const subscriptions = gql`
     characterUpdated(gameStateID: ID!): Character!
 
     # Lobby
-    lobbiesUpdated: Lobby!
+    lobbiesUpdated: [Lobby]!
     lobbyUsersUpdated(lobbyID: ID!): [User]!
   }
 `;
