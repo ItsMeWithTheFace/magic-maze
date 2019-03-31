@@ -78,7 +78,7 @@ class Board extends Component {
       currentUser: null,
       gameStateID: null,
       selected: '',               // selected character colour
-      characters: [],             // character objects
+      characters: {},             // character objects
       selector: [],               // selector Objects
       gameEndTime: new Date(new Date().getTime() + 3 * 60000),    // end time (for timer)
       itemsClaimed: false,        // whether or not all the items have been claimed
@@ -272,7 +272,6 @@ class Board extends Component {
       characters.purple = this.createCharacter(0, results.data.gameState.characters.find(x => x.colour === 'purple'));
       characters.blue = this.createCharacter(1, results.data.gameState.characters.find(x => x.colour === 'blue'));
       characters.green = this.createCharacter(2, results.data.gameState.characters.find(x => x.colour === 'green'));
-
       // render initial maze tile
       const startTileTexture = new PIXI.Texture(
         PIXI.utils.TextureCache[require('../assets/maze/0.png')],
@@ -313,7 +312,7 @@ class Board extends Component {
         new PIXI.Rectangle(5 * TILE_SIZE, 4 * TILE_SIZE, TILE_SIZE, TILE_SIZE),
       );
       let selectorList = [];
-      characters.forEach(character => {
+      results.data.gameState.characters.forEach(character => {
         const selectorObject = new PIXI.Sprite(selectorTexture);
         selectorObject.colour = character.colour;
         selectorObject.x = null;
@@ -324,7 +323,7 @@ class Board extends Component {
       });
 
       console.log(characters);
-      console.log(selector);
+      console.log(selectorList);
       this.setState({
         gameEndTime: new Date(results.data.gameState.endTime),
         itemsClaimed: results.data.gameState.allItemsClaimed,
