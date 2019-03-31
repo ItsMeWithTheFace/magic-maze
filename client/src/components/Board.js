@@ -71,6 +71,12 @@ let characterContainer;
 let mazeContainer;
 let artifactContainer;
 
+let endTimeSub;
+let characterUpdatedSub;
+let mazeTileUpdatedSub;
+let itemsClaimedSub;
+let endGameSub;
+
 class Board extends Component {
   constructor(props) {
     super(props);
@@ -115,7 +121,6 @@ class Board extends Component {
   }
 
   componentDidMount() {
-    const { gameStateID } = this.state;
     const { firebase } = this.props;
 
     this.authListener = firebase.auth.onAuthStateChanged((user) => {
@@ -129,11 +134,10 @@ class Board extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     if ((prevProps.gameStateID !== this.props.gameStateID && this.state.currentUser)
-      || this.props.gameStateID && prevState.currentUser !== this.state.currentUser) {
+      || (this.props.gameStateID && prevState.currentUser !== this.state.currentUser)) {
       
       this.setState({ gameStateID: this.props.gameStateID },
         () => {
-          console.log(this.state);
           const { gameStateID } = this.state;
           document.getElementById('board').appendChild(app.view);
           document.body.style.overflow = 'hidden';
@@ -142,12 +146,12 @@ class Board extends Component {
             .add(spriteList)
             .load(this.setup);
 
-          client().subscribe({ query: ENDTIME_QUERY(gameStateID), variables: { gameStateID } })
-            .forEach(time => this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) }));
+          endTimeSub = client().subscribe({ query: ENDTIME_QUERY(gameStateID), variables: { gameStateID } })
+            .subscribe(time => this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) }));
 
           // get colour and set character state
-          client().subscribe({ query: CHARACTER_UPDATED_QUERY(gameStateID), variables: { gameStateID } })
-            .forEach((results) => {
+          characterUpdatedSub = client().subscribe({ query: CHARACTER_UPDATED_QUERY(gameStateID), variables: { gameStateID } })
+            .subscribe((results) => {
               const { characters, selector, currentUser } = this.state;
 
               const { colour, coordinates, locked, itemClaimed } = results.data.characterUpdated;
@@ -185,8 +189,8 @@ class Board extends Component {
             });
 
           // set add mazeTile
-          client().subscribe({ query: MAZETILE_UPDATED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
-            .forEach((results) => {
+          mazeTileUpdatedSub = client().subscribe({ query: MAZETILE_UPDATED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+            .subscribe((results) => {
               const newTileTexture = new PIXI.Texture(
                 PIXI.utils.TextureCache[require(`../assets/maze/${results.data.mazeTileAdded.spriteID}.png`)],
                 new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
@@ -204,8 +208,8 @@ class Board extends Component {
             });
 
           // display message if all items have been claimed
-          client().subscribe({ query: ITEMS_CLAIMED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
-            .forEach(() => {
+          itemsClaimedSub = client().subscribe({ query: ITEMS_CLAIMED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+            .subscribe(() => {
               toast.info('🙌🏻 all items have been claimed! all vortexes disabled! time to escape!', {
                 position: 'bottom-right',
                 autoClose: false,
@@ -216,8 +220,8 @@ class Board extends Component {
             });
 
           // end the game if true
-          client().subscribe({ query: END_GAME_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
-            .forEach(() => {
+          endGameSub = client().subscribe({ query: END_GAME_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+            .subscribe(() => {
               this.setState({
                 doTick: false,
                 gameOver: true,
@@ -230,6 +234,11 @@ class Board extends Component {
 
   componentWillUnmount() {
     this.authListener();
+    endTimeSub.unsubscribe();
+    characterUpdatedSub.unsubscribe();
+    mazeTileUpdatedSub.unsubscribe();
+    itemsClaimedSub.unsubscribe();
+    endGameSub.unsubscribe();
   }
 
   /**
@@ -239,7 +248,6 @@ class Board extends Component {
     const {
       characters,
       gameStateID,
-      actions,
     } = this.state;
     const query = gql`
       {
@@ -271,8 +279,6 @@ class Board extends Component {
       }
     `;
     client().query({ query }).then((results) => {
-      console.log(results);
-
       // render and create characters
       characters.red = this.createCharacter(3, results.data.gameState.characters.find(x => x.colour === 'red'));
       characters.purple = this.createCharacter(0, results.data.gameState.characters.find(x => x.colour === 'purple'));
@@ -329,8 +335,6 @@ class Board extends Component {
         selectorList.push(selectorObject);
       });
 
-      console.log(characters);
-      console.log(selectorList);
       this.setState({
         gameEndTime: new Date(results.data.gameState.endTime),
         itemsClaimed: results.data.gameState.allItemsClaimed,
@@ -384,9 +388,7 @@ class Board extends Component {
           }
         }
       `;
-      client().mutate({ mutation }).then((results) => {
-        console.log(results.data.moveCharacter);
-      });
+      client().mutate({ mutation });
     }
   }
 
@@ -398,7 +400,6 @@ class Board extends Component {
   createCharacter = (offset, data) => {
     const {
       gameStateID,
-      selected,
       currentUser,
     } = this.state;
 
@@ -421,7 +422,7 @@ class Board extends Component {
           lockCharacter(
             gameStateID: "${gameStateID}",
             characterColour: "${character.colour}",
-            userID: "${this.state.currentUser.uid}",
+            userID: "${currentUser.uid}",
           ) {
             colour
             locked
@@ -432,22 +433,7 @@ class Board extends Component {
           }
         }
       `;
-      client().mutate({ mutation }).then((results) => {
-        // update colour, x, y
-        console.log(results.data.lockCharacter);
-
-        // const { selector, characters } = this.state;
-        // const { colour, coordinates, locked } = results.data.lockCharacter;
-        // const newSelected = locked === currentUser.uid ? colour : '';
-        // const selectorObjIndex = selector.findIndex((select) => select.colour === colour);
-        // selector[selectorObjIndex].x = coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
-        // selector[selectorObjIndex].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
-        // selector[selectorObjIndex].visible = locked ? true : false;
-        // characters[colour].locked = locked;
-
-        // this.setState({ selected: newSelected, selector, characters });
-      });
-
+      client().mutate({ mutation });
     });
     return character;
   }
@@ -477,7 +463,6 @@ class Board extends Component {
           }
         }
       `;
-      console.log(mutation);
       client().mutate({ mutation }).then((results) => {
         this.setState({ selected: '' });
       });
