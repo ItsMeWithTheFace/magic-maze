@@ -423,7 +423,7 @@ class Board extends Component {
             <span role="img" aria-label="party">🎉</span>
           </ModalHeader>
           <ModalBody>
-            The boys escaped in time and a free to fight a dragon or something!
+            The boys escaped in time and are free to fight a dragon or something!
           </ModalBody>
           <ModalFooter>
             <Button color="success" className="mb-1" onClick={() => history.push('/')}>Play Again</Button>

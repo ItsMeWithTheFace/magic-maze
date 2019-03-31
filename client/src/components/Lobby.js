@@ -1,22 +1,27 @@
 import React, { Component } from 'react';
 import {
-  Table, Card, CardHeader, CardBody, CardTitle, CardFooter, Badge, Button
+  Table, Card, CardHeader, CardBody, CardTitle, CardFooter, Badge, Button, Spinner,
 } from 'reactstrap';
-import { faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faDoorOpen } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import gql from 'graphql-tag';
-import { Query, Mutation } from 'react-apollo';
+import client from '../common/utils';
 import './Lobby.css';
 import createGame from '../actions/game';
+
+library.add([
+  faUsers,
+  faDoorOpen,
+]);
 
 const GET_LOBBIES = gql`
 {
   lobbies {
     _id
-    user {
+    users {
       uid
     }
   }
@@ -36,10 +41,6 @@ const JOIN_LOBBY = (lobbyID, userID) => gql`
 }
 `;
 
-library.add([
-  faUsers,
-]);
-
 /**
  * Not sure what states you want to fill that in. Redux states are passed into
  * the component as props. So this will be the main lobby screen or you can rename it
@@ -51,11 +52,41 @@ class Lobby extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      lobbyList: [],
+      loading: false,
     };
   }
 
+  componentDidMount() {
+    client().query({ query: GET_LOBBIES }).then((results) => {
+      console.log(results);
+      this.setState({
+        lobbyList: results.data.lobbies,
+        loading: results.loading,
+      });
+    });
+  }
+
   render() {
+    const { loading, lobbyList } = this.state;
     const { history } = this.props;
+
+    if (loading) {
+      return (
+        <div>
+          <div className="cover">
+            <div className="container" style={{ marginTop: '15em' }}>
+              <header>
+                <h1>LOADING</h1>
+              </header>
+              <div style={{ textAlign: 'center', marginTop: '5em' }}>
+                <Spinner color="success" style={{ width: '15em', height: '15em', fontWeight: 'bold' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div>
@@ -69,22 +100,26 @@ class Lobby extends Component {
                 <Table dark striped hover className="h-100">
                   <thead>
                     <tr>
-                      <th>ID</th>
-                      <th>Name</th>
+                      <th>
+                        <h3>
+                          <FontAwesomeIcon icon="door-open" />
+                          &nbsp;Join a Lobby
+                        </h3>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>1</td>
-                      <td>Kevin's lobby</td>
-                    </tr>
-                    <tr>
-                      <td>2</td>
-                      <td>Stephen's lobby</td>
-                    </tr>
-                    <tr>
-                      <td>3</td>
-                      <td>Rakin's lobby</td>
+                      {
+                        lobbyList.length > 0
+                          ? lobbyList.map(lobby => (
+                            <td>
+                              {lobby}
+                              &apos;s lobby
+                            </td>
+                          ))
+                          : <td>No lobbies currently...</td>
+                      }
                     </tr>
                   </tbody>
                 </Table>
@@ -110,7 +145,8 @@ class Lobby extends Component {
             </div>
             <div className="row mt-5">
               <div className="col" style={{ textAlign: 'center' }}>
-                <Button color="secondary" size="lg" onClick={() => history.push('/')}>Back</Button>
+                <Button color="primary" size="lg">Create Lobby</Button>
+                <Button color="secondary" className="ml-3" size="lg" onClick={() => history.push('/')}>Back</Button>
               </div>
             </div>
           </div>
