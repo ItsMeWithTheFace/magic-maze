@@ -29,7 +29,7 @@ import {
   END_GAME_QUERY,
   ITEMS_CLAIMED_QUERY,
 } from '../common/queries';
-import { ACTIONS } from '../common/consts';
+import { rotateList } from '../common/consts';
 
 // constants
 const SCALE = 4;
@@ -149,7 +149,11 @@ class Board extends Component {
             .load(this.setup);
 
           endTimeSub = client().subscribe({ query: ENDTIME_QUERY(gameStateID), variables: { gameStateID } })
-            .subscribe(time => this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) }));
+            .subscribe(time => {
+              const rotateActions = rotateList(this.state.actions, 1);
+              console.log(rotateActions);
+              this.setState({ gameEndTime: new Date(time.data.endTimeUpdated), actions: rotateActions });
+            });
 
           // get colour and set character state
           characterUpdatedSub = client().subscribe({ query: CHARACTER_UPDATED_QUERY(gameStateID), variables: { gameStateID } })
@@ -236,11 +240,11 @@ class Board extends Component {
 
   componentWillUnmount() {
     this.authListener();
-    endTimeSub.unsubscribe();
-    characterUpdatedSub.unsubscribe();
-    mazeTileUpdatedSub.unsubscribe();
-    itemsClaimedSub.unsubscribe();
-    endGameSub.unsubscribe();
+    if (endTimeSub) endTimeSub.unsubscribe();
+    if (characterUpdatedSub) characterUpdatedSub.unsubscribe();
+    if (mazeTileUpdatedSub) mazeTileUpdatedSub.unsubscribe();
+    if (itemsClaimedSub) itemsClaimedSub.unsubscribe();
+    if (endGameSub) endGameSub.unsubscribe();
   }
 
   /**

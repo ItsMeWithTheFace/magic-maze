@@ -131,8 +131,8 @@ class Lobby extends Component {
   }
 
   unsubscribeToLobby = () => {
-    lobbySub.unsubscribe();
-    gameSub.unsubscribe();
+    if (lobbySub) lobbySub.unsubscribe();
+    if (gameSub) gameSub.unsubscribe();
   }
 
   deleteLobby = (lobbyID, userID) => {
