@@ -8,11 +8,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import idx from 'idx';
+import Cookies from 'universal-cookie';
 import gql from 'graphql-tag';
 import client from '../common/utils';
 import './Lobby.css';
 import Loading from './Loading';
-import createGame from '../actions/game';
 import {
   LOBBY_UPDATED_QUERY,
   LOBBY_USERS_UPDATED_QUERY,
@@ -70,7 +70,6 @@ class Lobby extends Component {
       () => (
         firebase.auth.onAuthStateChanged((user) => {
           if (user) {
-            console.log(this.state.lobbyList);
             this.setState({
               currentUser: user,
               currentLobby: this.getCurrentLobby(user.uid),
@@ -117,7 +116,7 @@ class Lobby extends Component {
     // subscription for when gamestate is created
     gameSub = client().subscribe({ query: CREATED_GAMESTATE_QUERY(lobbyID), variables: { lobbyID } })
       .subscribe((results) => {
-        this.props.createGame(results.data.createdGameState);
+        this.setGameStateCookie(results.data.createdGameState);
         this.props.history.push('/board');
       });
   }
@@ -243,15 +242,27 @@ class Lobby extends Component {
     }
   }
 
+  setGameStateCookie = (gameStateID) => {
+    const cookies = new Cookies();
+    if (gameStateID) {
+      cookies.set('gameStateID', gameStateID, {
+        sameSite: true,
+        maxAge: 28800,
+        // secure: true,
+      });
+    } else {
+      cookies.set('gameStateID', null);
+    }
+  }
+
   createGameState = (lobbyID) => {
     const mutation = gql`
       mutation {
         createGameState(lobbyID: "${lobbyID}")
       }
     `;
-    console.log(mutation);
     client().mutate({ mutation }).then((results) => {
-      this.props.createGame(results.data.createGameState);
+      this.setGameStateCookie(results.data.createGameState);
       this.props.history.push('/board');
       const mutation = gql`
         mutation {
@@ -374,15 +385,9 @@ const mapStateToProps = state => ({
   firebase: state.firebaseReducer.firebaseInst,
 });
 
-// Move this function to the component where you will have the create game button
-// and pass in the gameStateID into it, look at the `temp.js` for how to call this func
-const mapDispatchToProps = dispatch => ({
-  createGame: gameStateID => dispatch(createGame(gameStateID)),
-});
-
 Lobby.propTypes = {
   history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
   firebase: PropTypes.shape({ auth: PropTypes.func.isRequired }).isRequired,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Lobby);
+export default connect(mapStateToProps)(Lobby);
