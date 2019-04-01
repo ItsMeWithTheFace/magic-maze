@@ -94,10 +94,11 @@ module.exports = {
       .findOne({ _id: ObjectId(gameStateID) }),
   },
   Mutation: {
-    createGameState: async (_parent, { lobbyID, users }, { models }) => {
+    createGameState: async (_parent, { lobbyID }, { models }) => {
       await mongoose.connect(process.env.MONGODB_DEV, { useNewUrlParser: true });
+      const lobby = await models.Lobby.findOne({ _id: ObjectId(lobbyID) });
 
-      let actions = await models.ActionCard.find({ playerCount: users.length }).toArray();
+      let actions = await models.ActionCard.find({ playerCount: lobby.users.length }).toArray();
       actions = shuffle(actions.map(action => action.actions));
       // create gameState object and get ID
       const initialGameState = {
@@ -108,7 +109,7 @@ module.exports = {
         mazeTiles: [],
         characters: [],
         actions,
-        users,
+        users: lobby.users,
       };
 
       const gameState = await models.GameState.insertOne({ ...initialGameState });

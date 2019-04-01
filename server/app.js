@@ -21,7 +21,7 @@ const ws = createServer(app);
 
 app.use(morgan('combined', { stream: { write: (message) => { logger.info(message); } } }));
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: '*',
   optionsSuccessStatus: 200,
 }));
 app.use(bodyParser.json());
@@ -30,7 +30,9 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: async ({ req }) => {
-    if (!req || !req.headers) return {}; // websockets
+    if (!req || !req.headers) {
+      return {}; // websockets
+    }
 
     let token;
     if (req && req.headers && req.headers.authorization) {
@@ -59,23 +61,12 @@ const server = new ApolloServer({
     path: '/server/graphql',
     onConnect: async (connectionParams) => {
       if (!connectionParams.authToken) throw new AuthenticationError('Missing auth token');
+
       const decodedToken = await firebaseApp
         .auth()
         .verifyIdToken(connectionParams.authToken);
-
-      const userInfo = {
-        uid: decodedToken.uid,
-        email: decodedToken.email,
-      };
       // equivalent atomic findOneOrCreate action in mongo
-      const user = await models.User.findOneAndUpdate(
-        { uid: decodedToken.uid },
-        { $setOnInsert: userInfo },
-        {
-          upsert: true, // create new record if data doesn't exist
-          returnOriginal: false,
-        },
-      );
+      const user = await models.User.findOne({ uid: decodedToken.uid });
 
       return {
         user: user.value,
@@ -84,7 +75,7 @@ const server = new ApolloServer({
   },
 });
 
-app.post('/server/adduser', async (req, res) => {
+app.post('/server/adduser/', async (req, res) => {
   const { uid, username, email } = req.body;
   if (!uid || !username || !email) return res.status(400).end('Missing required params');
 

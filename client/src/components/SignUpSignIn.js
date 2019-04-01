@@ -23,7 +23,7 @@ library.add([
 ]);
 
 const REGISTER = 'register';
-const SIGN_IN = 'signin';
+const LOGIN = 'login';
 
 class SignUp extends Component {
   constructor(props) {
@@ -108,16 +108,19 @@ class SignUp extends Component {
     );
 
     const buttons = page === REGISTER ? (
-      <Button color="primary" onClick={() => this.signupUser()}>Register</Button>
+      <Button color="primary" className="mb-1" onClick={() => this.signupUser()}>Register</Button>
     ) : (
-      <Button color="success" onClick={() => this.loginUser()}>Sign In</Button>
+      <Button color="success" className="mb-1" onClick={() => this.loginUser()}>Login</Button>
     );
 
     return (
       <div>
         <div className="cover">
-          <div className="container">
-            <Card>
+          <div className="container" style={{ marginTop: '10em' }}>
+            <header>
+              <h1 className="mb-5">{page.toUpperCase()}</h1>
+            </header>
+            <Card className="bg-dark">
               <CardHeader>
                 <Nav pills>
                   <NavItem>
@@ -127,9 +130,9 @@ class SignUp extends Component {
                     </NavLink>
                   </NavItem>
                   <NavItem>
-                    <NavLink href="#" active={page === SIGN_IN} onClick={() => this.setState({ page: SIGN_IN })}>
+                    <NavLink href="#" active={page === LOGIN} onClick={() => this.setState({ page: LOGIN })}>
                       <FontAwesomeIcon icon="sign-in-alt" />
-                      &nbsp;Sign In
+                      &nbsp;Login
                     </NavLink>
                   </NavItem>
                 </Nav>
@@ -167,7 +170,7 @@ class SignUp extends Component {
               </CardBody>
               <CardFooter style={{ textAlign: 'center' }}>
                 {buttons}
-                <Button color="secondary" className="ml-2" onClick={() => history.push('/')}>Back</Button>
+                <Button color="secondary" className="ml-2 mb-1" onClick={() => history.push('/')}>Back</Button>
               </CardFooter>
             </Card>
           </div>

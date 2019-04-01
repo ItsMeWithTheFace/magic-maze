@@ -42,34 +42,31 @@ class Timer extends Component {
     if (minutes === 1 && seconds === 0) {
       toast.error('⏳ 1 minute left to escape! gogogo', {
         position: 'bottom-right',
-        autoClose: false,
       });
     } else if (minutes === 2 && seconds === 0) {
       toast.warn('⏳ 2 minutes left!', {
         position: 'bottom-right',
-        autoClose: false,
       });
     } else if (minutes === 0 && seconds === 30) {
       toast.error('⏳ 30 SECONDS LEFT!!', {
         position: 'bottom-right',
-        autoClose: false,
       });
     }
   
     return (
       <div>
         {/* game lost modal */}
-        <Modal isOpen={minutes <= 0 && seconds <= 0} size={'lg'}>
+        <Modal isOpen={minutes <= 0 && seconds <= 0} size="lg" className="bg-dark" >
           <ModalHeader>
             <span role="img" aria-label="siren">🚨</span> 
-            YOU LOST! 
+            &nbsp;YOU LOST!&nbsp; 
             <span role="img" aria-label="siren">🚨</span>
           </ModalHeader>
           <ModalBody>
             The boys failed to escape in time and got caught by the authorities...
           </ModalBody>
           <ModalFooter>
-            <Button color="danger" onClick={() => this.props.history.push('/')}>Exit</Button>{' '}
+            <Button color="danger" className="mb-1" onClick={() => this.props.endGame()}>Exit</Button>
           </ModalFooter>
         </Modal>
         <div className="timer">
@@ -83,7 +80,7 @@ class Timer extends Component {
 }
 
 Timer.propTypes = {
-  history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
+  endGame: PropTypes.func.isRequired,
 };
 
 export default Timer;

@@ -13,53 +13,6 @@ module.exports = {
       .findOne({ _id: ObjectId(lobbyID) }),
     lobbies: async (_parent, _args, { models }) => models.Lobby.find({}).toArray(),
   },
-  Mutation: {
-    createLobby: async (_parent, { userID }, { models }) => {
-      const user = await models.User.findOne({ uid: userID });
-      const initialLobby = {
-        users: [user],
-      };
-
-      const { insertedCount, insertedId } = await models.Lobby.insertOne({ ...initialLobby });
-
-      if (insertedCount === 0) throw Error('Could not create a new lobby');
-      const lobbies = models.Lobby.find({}).toArray();
-      pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobbies });
-      return models.Lobby.findOne({ _id: insertedId });
-    },
-    deleteLobby: async (_parent, { lobbyID, userID }, { models }) => {
-      const res = await models.Lobby.deleteOne({
-        _id: ObjectId(lobbyID),
-        'user.uid': userID,
-      });
-      if (res.deletedCount > 0) {
-        const lobbies = models.Lobby.find({}).toArray();
-        pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobbies });
-        return true;
-      }
-      return false;
-    },
-    joinLobby: async (_parent, { lobbyID, userID }, { models }) => {
-      const user = await models.User.findOne({ uid: userID });
-      const { value } = await models.Lobby.findOneAndUpdate(
-        { _id: ObjectId(lobbyID) },
-        { $addToSet: { users: user } },
-        { returnOriginal: false },
-      );
-      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value.users, lobbyID });
-      return value;
-    },
-    leaveLobby: async (_parent, { lobbyID, userID }, { models }) => {
-      const user = await models.User.findOne({ uid: userID });
-      const { value } = await models.Lobby.findOneAndUpdate(
-        { _id: ObjectId(lobbyID) },
-        { $pull: { users: user } },
-        { returnOriginal: false },
-      );
-      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value.users, lobbyID });
-      return _.findIndex(value.users, u => u.uid === userID) === -1;
-    },
-  },
   Subscription: {
     lobbiesUpdated: {
       // Additional event labels can be passed to asyncIterator creation
@@ -73,6 +26,53 @@ module.exports = {
           ObjectId(lobbyID).equals(ObjectId(variables.lobbyID))
         ),
       ),
+    },
+  },
+  Mutation: {
+    createLobby: async (_parent, { userID }, { models }) => {
+      const user = await models.User.findOne({ uid: userID });
+      const initialLobby = {
+        users: [user],
+      };
+
+      const { insertedCount, insertedId } = await models.Lobby.insertOne({ ...initialLobby });
+
+      if (insertedCount === 0) throw Error('Could not create a new lobby');
+      const lobbies = await models.Lobby.find({}).toArray();
+      pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobbies });
+      return models.Lobby.findOne({ _id: insertedId });
+    },
+    deleteLobby: async (_parent, { lobbyID, userID }, { models }) => {
+      const res = await models.Lobby.deleteOne({
+        _id: ObjectId(lobbyID),
+        'users.uid': userID,
+      });
+      if (res.deletedCount > 0) {
+        const lobbies = await models.Lobby.find({}).toArray();
+        pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobbies });
+        return true;
+      }
+      return false;
+    },
+    joinLobby: async (_parent, { lobbyID, userID }, { models }) => {
+      const user = await models.User.findOne({ uid: userID });
+      const { value } = await models.Lobby.findOneAndUpdate(
+        { _id: ObjectId(lobbyID) },
+        { $addToSet: { users: user } },
+        { returnOriginal: false },
+      );
+      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value, lobbyID });
+      return value;
+    },
+    leaveLobby: async (_parent, { lobbyID, userID }, { models }) => {
+      const user = await models.User.findOne({ uid: userID });
+      const { value } = await models.Lobby.findOneAndUpdate(
+        { _id: ObjectId(lobbyID) },
+        { $pull: { users: user } },
+        { returnOriginal: false },
+      );
+      pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value, lobbyID });
+      return _.findIndex(value.users, u => u.uid === userID) === -1;
     },
   },
 };

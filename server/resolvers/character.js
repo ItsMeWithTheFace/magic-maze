@@ -508,7 +508,7 @@ module.exports = {
       const userIndex = _.findIndex(gameState.users, user => (user.uid === userID));
 
       if (userIndex === -1) throw Error('User does not exist in game');
-      if (gameState.actions[userIndex].includes(Action.SEARCH)) throw Error('User cannot perform the search action');
+      if (!gameState.actions[userIndex].includes(Action.SEARCH)) throw Error('User cannot perform the search action');
 
       const character = _.find(gameState.characters, char => (
         char.coordinates.x === characterCoords.x
@@ -618,15 +618,30 @@ module.exports = {
       userID,
       characterColour,
     }, { models }) => {
+      const { characters } = await models.GameState.findOne({
+        _id: ObjectId(gameStateID),
+        'characters.colour': characterColour,
+      });
+
+      const character = _.find(characters, char => char.colour === characterColour);
+      const hasAnotherLock = _.find(characters, char => char.locked === userID);
+      if (hasAnotherLock > -1) return character;
+
+      if (!character.locked) {
+        character.locked = userID;
+      } else if (character.locked === userID) {
+        character.locked = null;
+      } else {
+        return character;
+      }
+
       const updatedGameState = await models.GameState.findOneAndUpdate({
         _id: ObjectId(gameStateID),
         'characters.colour': characterColour,
       },
       {
         $set: {
-          'characters.$.locked': {
-            $cond: { if: { $type: 10 }, then: ObjectId(userID), else: { $type: 10 } },
-          },
+          'characters.$.locked': character.locked,
         },
       },
       { returnOriginal: false });
