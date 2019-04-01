@@ -39,6 +39,7 @@ const GET_LOBBIES = gql`
 
 let lobbySub;
 let gameSub;
+let lobbiesSub;
 
 /**
  * Not sure what states you want to fill that in. Redux states are passed into
@@ -80,28 +81,18 @@ class Lobby extends Component {
     })
 
     // update lobby list
-    client().subscribe({ query: LOBBY_UPDATED_QUERY })
-    .forEach((results) => {
-      this.setState({
-        lobbyList: results.data.lobbiesUpdated,
+    lobbiesSub = client().subscribe({ query: LOBBY_UPDATED_QUERY })
+      .subscribe((results) => {
+        this.setState({
+          lobbyList: results.data.lobbiesUpdated,
+        });
       });
-    });
   }
 
   componentWillUnmount() {
     this.unsubscribeToLobby();
+    if (lobbiesSub) lobbiesSub.unsubscribe();
   }
-
-  // componentDidUpdate(prevProps, prevState) {
-  //   const currentLobbyID = idx(this.state, _ => _.currentLobby._id);
-  //   const prevLobbyID = idx(prevState, _ => _.currentLobby._id);
-
-  //   if (currentLobbyID && prevLobbyID !== currentLobbyID) {
-  //     const lobbyID = currentLobbyID;
-  //     // update current lobby's user list
-
-  //   }
-  // }
 
   getCurrentLobby = (userID) => {
     const { lobbyList } = this.state;
@@ -260,8 +251,6 @@ class Lobby extends Component {
     `;
     console.log(mutation);
     client().mutate({ mutation }).then((results) => {
-      // will return the id and then this should probably be save in redux state
-      // then history.push('/board')
       this.props.createGame(results.data.createGameState);
       this.props.history.push('/board');
       // const mutation = gql`

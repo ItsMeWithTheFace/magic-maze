@@ -156,7 +156,6 @@ class Board extends Component {
           endTimeSub = client().subscribe({ query: ENDTIME_QUERY(gameStateID), variables: { gameStateID } })
             .subscribe(time => {
               const rotateActions = rotateList(this.state.actions, 1);
-              console.log(rotateActions);
               this.setState({ gameEndTime: new Date(time.data.endTimeUpdated), actions: rotateActions });
             });
 
