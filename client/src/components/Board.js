@@ -30,7 +30,7 @@ import {
   END_GAME_QUERY,
   ITEMS_CLAIMED_QUERY,
 } from '../common/queries';
-import { ACTIONS } from '../common/consts';
+import { rotateList } from '../common/consts';
 
 // constants
 const SCALE = 4;
@@ -150,7 +150,11 @@ class Board extends Component {
             .load(this.setup);
 
           endTimeSub = client().subscribe({ query: ENDTIME_QUERY(gameStateID), variables: { gameStateID } })
-            .subscribe(time => this.setState({ gameEndTime: new Date(time.data.endTimeUpdated) }));
+            .subscribe(time => {
+              const rotateActions = rotateList(this.state.actions, 1);
+              console.log(rotateActions);
+              this.setState({ gameEndTime: new Date(time.data.endTimeUpdated), actions: rotateActions });
+            });
 
           // get colour and set character state
           characterUpdatedSub = client().subscribe({ query: CHARACTER_UPDATED_QUERY(gameStateID), variables: { gameStateID } })
@@ -237,11 +241,11 @@ class Board extends Component {
 
   componentWillUnmount() {
     this.authListener();
-    endTimeSub.unsubscribe();
-    characterUpdatedSub.unsubscribe();
-    mazeTileUpdatedSub.unsubscribe();
-    itemsClaimedSub.unsubscribe();
-    endGameSub.unsubscribe();
+    if (endTimeSub) endTimeSub.unsubscribe();
+    if (characterUpdatedSub) characterUpdatedSub.unsubscribe();
+    if (mazeTileUpdatedSub) mazeTileUpdatedSub.unsubscribe();
+    if (itemsClaimedSub) itemsClaimedSub.unsubscribe();
+    if (endGameSub) endGameSub.unsubscribe();
   }
 
   /**
@@ -445,7 +449,7 @@ class Board extends Component {
    * search for a new maze tile upon encountering a search tile
    */
   search = () => {
-    const { selected, characters, gameStateID } = this.state;
+    const { selected, characters, gameStateID, currentUser, selector } = this.state;
 
     if (selected) {
       const x = (characters[selected].x - X_OFFSET) / (TILE_SIZE * SCALE);
@@ -454,7 +458,7 @@ class Board extends Component {
         mutation {
           searchAction (
             gameStateID: "${gameStateID}",
-            userID: "${this.state.currentUser.uid}",
+            userID: "${currentUser.uid}",
             characterCoords: { x: ${x}, y: ${y} },
           ) {
             spriteID
@@ -467,9 +471,25 @@ class Board extends Component {
         }
       `;
       client().mutate({ mutation }).then((results) => {
-        this.setState({ selected: '' });
+        characters[selected].locked = null;
+        const selectorObjIndex = selector.findIndex((select) => select.colour === selected);
+        selector[selectorObjIndex].visible = false;
+        this.setState({ selected: '', characters, selector });
       });
     }
+  }
+
+  endGame = () => {
+    const { gameStateID } = this.state;
+    const mutation = gql`
+    mutation{
+      deleteGameState (
+        gameStateID: "${gameStateID}",
+      )
+    }
+    `;
+    client().mutate({ mutation });
+    this.props.history.push('/');
   }
 
   render() {
@@ -477,7 +497,6 @@ class Board extends Component {
     const {
       itemsClaimed, gameOver, doTick, gameEndTime,
     } = this.state;
-    const { history } = this.props;
 
     if (itemsClaimed) {
       message = <div className="message">All items have been claimed! All vortexes are disabled!</div>;
@@ -543,10 +562,10 @@ class Board extends Component {
             The boys escaped in time and are free to fight a dragon or something!
           </ModalBody>
           <ModalFooter>
-            <Button color="success" className="mb-1" onClick={() => history.push('/')}>Play Again</Button>
+            <Button color="success" className="mb-1" onClick={() => this.endGame()}>Play Again</Button>
           </ModalFooter>
         </Modal>
-        <Timer history={history} endTime={gameEndTime} doTick={doTick} />
+        <Timer endGame={() => this.endGame()} endTime={gameEndTime} doTick={doTick} />
 
         <div className="sidenav">
           {this.state.users.map((user, index) => (

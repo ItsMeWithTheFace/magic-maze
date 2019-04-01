@@ -508,7 +508,7 @@ module.exports = {
       const userIndex = _.findIndex(gameState.users, user => (user.uid === userID));
 
       if (userIndex === -1) throw Error('User does not exist in game');
-      if (gameState.actions[userIndex].includes(Action.SEARCH)) throw Error('User cannot perform the search action');
+      if (!gameState.actions[userIndex].includes(Action.SEARCH)) throw Error('User cannot perform the search action');
 
       const character = _.find(gameState.characters, char => (
         char.coordinates.x === characterCoords.x

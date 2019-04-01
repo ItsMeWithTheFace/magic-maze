@@ -13,3 +13,10 @@ export const ACTIONS = [
   'ESCALATOR',
   'VORTEX',
 ];
+
+export const rotateList = (array, shift) => {
+  for (let i = 0; i < shift; i += 1) {
+    array.unshift(array.pop());
+  }
+  return array;
+};

@@ -88,6 +88,10 @@ class Lobby extends Component {
     });
   }
 
+  componentWillUnmount() {
+    this.unsubscribeToLobby();
+  }
+
   // componentDidUpdate(prevProps, prevState) {
   //   const currentLobbyID = idx(this.state, _ => _.currentLobby._id);
   //   const prevLobbyID = idx(prevState, _ => _.currentLobby._id);
@@ -128,8 +132,8 @@ class Lobby extends Component {
   }
 
   unsubscribeToLobby = () => {
-    lobbySub.unsubscribe();
-    gameSub.unsubscribe();
+    if (lobbySub) lobbySub.unsubscribe();
+    if (gameSub) gameSub.unsubscribe();
   }
 
   deleteLobby = (lobbyID, userID) => {
@@ -169,7 +173,7 @@ class Lobby extends Component {
       client().mutate({ mutation: mutation }).then(() => {
         this.setState({ currentLobby: null });
         this.unsubscribeToLobby();
-        callback();
+        if (callback) callback();
       });
     }
   }
@@ -256,10 +260,21 @@ class Lobby extends Component {
     `;
     console.log(mutation);
     client().mutate({ mutation }).then((results) => {
-        // will return the id and then this should probably be save in redux state
-        // then history.push('/board')
-        this.props.createGame(results.data.createGameState);
-        this.props.history.push('/board');
+      // will return the id and then this should probably be save in redux state
+      // then history.push('/board')
+      this.props.createGame(results.data.createGameState);
+      this.props.history.push('/board');
+      const mutation = gql`
+        mutation {
+          deleteLobby(lobbyID: "${lobbyID}", userID: "${this.state.currentUser.uid}")
+        }
+      `;
+      client().mutate({ mutation: mutation }).then(() => {
+        this.setState({
+          currentLobby: null,
+        });
+        this.unsubscribeToLobby();
+      });
     }).catch((err) => console.error(err));
   }
 
