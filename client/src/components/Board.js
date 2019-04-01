@@ -539,12 +539,12 @@ class Board extends Component {
       ),
       ESCALATOR: (
         <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
-          <img src={escalatorIcon} className="mb-1" alt="escalator" style={{ maxWidth: '25px', maxHeight: '25px' }} />
+          <img src={escalatorIcon} className="mb-1" alt="Icon made from Freepik retrieved from FlatIcon licensed by CC 3.0" style={{ maxWidth: '25px', maxHeight: '25px' }} />
         </Button>
       ),
       VORTEX: (
         <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
-          <img src={vortexIcon} className="mb-1" alt="vortex" style={{ maxWidth: '25px', maxHeight: '25px' }}/>
+          <img src={vortexIcon} className="mb-1" alt="Icon made from Freepik retrieved from FlatIcon licensed by CC 3.0" style={{ maxWidth: '25px', maxHeight: '25px' }}/>
         </Button>
       ),
     }
