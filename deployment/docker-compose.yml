@@ -1,19 +1,19 @@
 version: '3'
 services:
   web:
-    build: ../client/
+    # build: ../client/
+    image: itsmewiththeface/magicmaze-client:latest
+    env_file:
+      - client_variables.env
     ports:
       - "5000:5000"
-      - "3000:3000"
-    volumes:
-      - ../client:/usr/src/app
+      - "80:3000"
   api:
-    build: ../server/
+    # build: ../server/
+    image: itsmewiththeface/magicmaze-server:latest
     env_file:
       - server_variables.env
     ports:
       - "8000:8000"
-    volumes:
-      - ../server:/usr/src/app
   redis:
     image: "redis:alpine"
