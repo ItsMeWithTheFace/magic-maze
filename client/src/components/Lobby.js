@@ -38,6 +38,7 @@ const GET_LOBBIES = gql`
 
 let lobbySub;
 let gameSub;
+let lobbiesSub;
 
 /**
  * Not sure what states you want to fill that in. Redux states are passed into
@@ -79,16 +80,17 @@ class Lobby extends Component {
     })
 
     // update lobby list
-    client().subscribe({ query: LOBBY_UPDATED_QUERY })
-    .forEach((results) => {
-      this.setState({
-        lobbyList: results.data.lobbiesUpdated,
+    lobbiesSub = client().subscribe({ query: LOBBY_UPDATED_QUERY })
+      .subscribe((results) => {
+        this.setState({
+          lobbyList: results.data.lobbiesUpdated,
+        });
       });
-    });
   }
 
   componentWillUnmount() {
     this.unsubscribeToLobby();
+    if (lobbiesSub) lobbiesSub.unsubscribe();
   }
 
   // componentDidUpdate(prevProps, prevState) {
