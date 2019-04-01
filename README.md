@@ -97,8 +97,6 @@ Our team chose to use **GraphQL** mainly because we wanted to try it out and gai
 
 Our deployment stack is made up of the following technologies:
 
-Our deployment stack is made up of the following technologies:
-
 - Docker
   - An application to containerize your application into modular, reusable components. This enables the application to be more flexible since the application can be deployed separately as well as onto other platforms like Amazon Web Services or Google Cloud Platform
 - Heroku
