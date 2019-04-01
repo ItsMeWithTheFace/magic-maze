@@ -10,14 +10,14 @@ const cookies = new Cookies();
 const token = cookies.get('authToken');
 
 const httpLink = () => new HttpLink({
-  uri: `http://${document.location.hostname}:8000/server/graphql`,
+  uri: `http://${process.env.REACT_APP_API_HOST}:8000/server/graphql`,
   headers: {
     authorization: token,
   },
 });
 
 const wsLink = () => new WebSocketLink({
-  uri: `ws://${document.location.hostname}:8000/server/graphql`,
+  uri: `ws://${process.env.REACT_APP_API_HOST}:8000/server/graphql`,
   options: {
     reconnect: true,
     connectionParams: {
