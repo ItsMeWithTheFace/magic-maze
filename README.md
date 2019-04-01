@@ -97,10 +97,14 @@ Our team chose to use **GraphQL** mainly because we wanted to try it out and gai
 
 Our deployment stack is made up of the following technologies:
 
-- Amazon Web Services
-- Kubernetes
+Our deployment stack is made up of the following technologies:
+
 - Docker
+  - An application to containerize your application into modular, reusable components. This enables the application to be more flexible since the application can be deployed separately as well as onto other platforms like Amazon Web Services or Google Cloud Platform
 - Heroku
+  - A hosting service for applications. One can deploy an application onto Heroku through the CLI or the web interface
+
+As with the backend and frontend stacks, these technologies were chosen due to prior experience with them. The benefit of using Heroku is its ease of use to host applications. It is also very configurable because you can add custom hostnames and plugins.
 
 ---
 
