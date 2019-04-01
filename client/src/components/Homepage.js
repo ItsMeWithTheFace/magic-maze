@@ -88,7 +88,8 @@ const mapDispatchToProps = dispatch => ({
 Homepage.propTypes = {
   history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
   logoutUserProp: PropTypes.func.isRequired,
-  firebase: PropTypes.shape({ auth: PropTypes.func.isRequired }).isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  firebase: PropTypes.object.isRequired,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Homepage);
