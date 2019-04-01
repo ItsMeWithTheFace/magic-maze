@@ -9,8 +9,7 @@ jobs:
           docker_layer_caching: true
       - run:
           name: Build the client
-          command: |
-            sudo docker build -t magicmaze/client:latest client/
+          command: docker build -t magicmaze/client:latest client/
   build-server:
     docker:
       - image: circleci/node:dubnium
@@ -20,7 +19,7 @@ jobs:
           docker_layer_caching: true
       - run:
           name: Build the server
-          command: sudo docker build -t magicmaze/server:latest server/
+          command: docker build -t magicmaze/server:latest server/
 
 workflows:
   version: 2
