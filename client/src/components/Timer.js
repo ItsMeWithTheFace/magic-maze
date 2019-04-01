@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import PropTypes from 'prop-types';
+import Cookies from 'universal-cookie';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 
 class Timer extends Component {
@@ -35,6 +36,7 @@ class Timer extends Component {
 
   render() {
     const { endTime } = this.props;
+    if (!endTime) return <div className="timer">0:00</div>
     const delta = new Date(endTime - this.state.now.getTime());
     const minutes = delta > 0 ? delta.getMinutes() : 0;
     const seconds = delta > 0 ? delta.getSeconds() : 0;
@@ -51,7 +53,10 @@ class Timer extends Component {
       toast.error('⏳ 30 SECONDS LEFT!!', {
         position: 'bottom-right',
       });
-    }
+    } else if (minutes === 0 && seconds === 0) {
+      const cookies = new Cookies();
+      cookies.set('gameStateID', null);
+    } 
   
     return (
       <div>

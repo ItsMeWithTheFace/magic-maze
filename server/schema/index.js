@@ -11,7 +11,7 @@ const actionCard = require('./actionCard');
 const queries = gql`
   type Query {
     # GameState
-    gameState(gameStateID: ID!): GameState!
+    gameState(gameStateID: ID!): GameState
 
     # Lobby
     lobby(lobbyID: ID!): Lobby!

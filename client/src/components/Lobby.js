@@ -400,7 +400,7 @@ const mapStateToProps = state => ({
 
 Lobby.propTypes = {
   history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
-  firebase: PropTypes.shape({ auth: PropTypes.func.isRequired }).isRequired,
+  firebase: PropTypes.object.isRequired,
 };
 
 export default connect(mapStateToProps)(Lobby);

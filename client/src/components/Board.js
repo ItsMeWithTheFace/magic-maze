@@ -94,7 +94,7 @@ class Board extends Component {
       selected: '',               // selected character colour
       characters: {},             // character objects
       selector: [],               // selector Objects
-      gameEndTime: new Date(new Date().getTime() + 3 * 60000),    // end time (for timer)
+      gameEndTime: null,    // end time (for timer)
       itemsClaimed: false,        // whether or not all the items have been claimed
       doTick: true,               // whether or not the timer should tick
       gameOver: false,            // whether or not the game is done or not
@@ -292,6 +292,12 @@ class Board extends Component {
     `;
     client().query({ query }).then((results) => {
       // render and create characters
+      if (!results.data.gameState) {
+        const cookies = new Cookies();
+        cookies.set('gameStateID', null);
+        this.props.history.push('/');
+        return null;
+      }
       characters.red = this.createCharacter(3, results.data.gameState.characters.find(x => x.colour === 'red'));
       characters.purple = this.createCharacter(0, results.data.gameState.characters.find(x => x.colour === 'purple'));
       characters.blue = this.createCharacter(1, results.data.gameState.characters.find(x => x.colour === 'blue'));
@@ -400,7 +406,10 @@ class Board extends Component {
           }
         }
       `;
-      client().mutate({ mutation });
+      client().mutate({ mutation }).catch((error) => (
+        toast.error(`🚫 ${error}` , {
+        position: 'bottom-right',
+      })));
     }
   }
 
@@ -445,7 +454,10 @@ class Board extends Component {
           }
         }
       `;
-      client().mutate({ mutation });
+      client().mutate({ mutation }).catch((error) => (
+        toast.error(`🚫 ${error}` , {
+        position: 'bottom-right',
+      })));
     });
     return character;
   }
@@ -454,7 +466,7 @@ class Board extends Component {
    * search for a new maze tile upon encountering a search tile
    */
   search = () => {
-    const { selected, characters, gameStateID, currentUser, selector } = this.state;
+    const { selected, characters, gameStateID, currentUser } = this.state;
 
     if (selected) {
       const x = (characters[selected].x - X_OFFSET) / (TILE_SIZE * SCALE);
@@ -475,12 +487,10 @@ class Board extends Component {
           }
         }
       `;
-      client().mutate({ mutation }).then((results) => {
-        characters[selected].locked = null;
-        const selectorObjIndex = selector.findIndex((select) => select.colour === selected);
-        selector[selectorObjIndex].visible = false;
-        this.setState({ selected: '', characters, selector });
-      });
+      client().mutate({ mutation }).catch((error) => (
+        toast.error(`🚫 ${error}` , {
+        position: 'bottom-right',
+      })));
     }
   }
 
@@ -506,6 +516,8 @@ class Board extends Component {
     } = this.state;
 
     if (itemsClaimed) {
+      const cookies = new Cookies();
+      cookies.set('gameStateID', null);
       message = <div className="message">All items have been claimed! All vortexes are disabled!</div>;
     }
 

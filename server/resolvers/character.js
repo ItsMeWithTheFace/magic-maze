@@ -524,7 +524,7 @@ module.exports = {
         });
       const nextMazeTile = _.find(gameState.mazeTiles, mt => !mt.cornerCoordinates);
 
-      if (!searchTile || nextMazeTile === undefined) throw Error('Search tile or next maze tile doesn\'t exist');
+      if (!searchTile || nextMazeTile === undefined) throw Error('Could not search for a new maze tile');
 
       const usedMazeTiles = _.reduce(gameState.mazeTiles, (array, mt) => {
         if (mt.cornerCoordinates) array.push(ObjectId(mt._id));
@@ -609,7 +609,10 @@ module.exports = {
 
       const mazeTile = _.find(updatedGameState.value.mazeTiles,
         mt => ObjectId(mt._id).equals(nextMazeTile._id));
-
+      const updatedChar = _.find(updatedGameState.value.characters,
+        char => char.colour === character.colour);
+      pubsub.publish(CHARACTER_COORDINATES_UPDATED,
+        { characterUpdated: updatedChar, gameStateID });
       pubsub.publish(MAZETILE_ADDED, { mazeTileAdded: mazeTile, gameStateID });
       return mazeTile;
     },
