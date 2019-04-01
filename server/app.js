@@ -40,7 +40,6 @@ const server = new ApolloServer({
     } else {
       throw new AuthenticationError('Authorization token not provided');
     }
-
     token = _.replace(token, 'Bearer ', '');
 
     const decodedToken = await firebaseApp
@@ -61,7 +60,6 @@ const server = new ApolloServer({
     path: '/server/graphql',
     onConnect: async (connectionParams) => {
       if (!connectionParams.authToken) throw new AuthenticationError('Missing auth token');
-
       const decodedToken = await firebaseApp
         .auth()
         .verifyIdToken(connectionParams.authToken);

@@ -37,19 +37,11 @@ class SignUp extends Component {
   }
 
   loginUser() {
-    const { firebase, loginUserProp, history } = this.props;
+    const { firebase, history } = this.props;
     const { email, password } = this.state;
     firebase
       .doSignInWithEmailAndPassword(email, password)
-      .then(async () => {
-        const user = firebase.auth.currentUser;
-
-        loginUserProp({
-          username: user.displayName,
-          email: user.email,
-          uid: user.uid,
-        });
-
+      .then(() => {
         history.push('/');
       })
       .catch((err) => {

@@ -56,11 +56,17 @@ module.exports = {
     },
     joinLobby: async (_parent, { lobbyID, userID }, { models }) => {
       const user = await models.User.findOne({ uid: userID });
+      const lobby = await models.Lobby.findOne(
+        { _id: ObjectId(lobbyID) },
+      );
+      if (lobby.users.length === 4) throw Error('Lobby is full');
       const { value } = await models.Lobby.findOneAndUpdate(
         { _id: ObjectId(lobbyID) },
         { $addToSet: { users: user } },
         { returnOriginal: false },
       );
+      const lobbies = await models.Lobby.find({}).toArray();
+      pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobbies });
       pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value, lobbyID });
       return value;
     },
@@ -71,6 +77,8 @@ module.exports = {
         { $pull: { users: user } },
         { returnOriginal: false },
       );
+      const lobbies = await models.Lobby.find({}).toArray();
+      pubsub.publish(LOBBIES_UPDATED, { lobbiesUpdated: lobbies });
       pubsub.publish(LOBBY_USER_UPDATED, { lobbyUsersUpdated: value, lobbyID });
       return _.findIndex(value.users, u => u.uid === userID) === -1;
     },

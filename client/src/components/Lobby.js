@@ -55,30 +55,26 @@ class Lobby extends Component {
       lobbyList: [],
       currentUser: null,
       currentLobby: null,
-      loading: false,
+      loading: true,
     };
   }
 
   componentDidMount() {
     const { firebase } = this.props;
 
-    client().query({ query: GET_LOBBIES }).then((results) => {
-      this.setState({
-        lobbyList: results.data.lobbies,
-        loading: results.loading,
-      },
-      () => (
-        firebase.auth.onAuthStateChanged((user) => {
-          if (user) {
-            this.setState({
-              currentUser: user,
-              currentLobby: this.getCurrentLobby(user.uid),
-            });
-          }
-        })
-      ));
-    })
-
+    this.authListener = firebase.auth.onAuthStateChanged((user) => {
+      if (user) {
+        client().query({ query: GET_LOBBIES }).then((results) => {
+          this.setState({
+            currentUser: user,
+            currentLobby: this.getCurrentLobby(user.uid, results.data.lobbies),
+            lobbyList: results.data.lobbies,
+            loading: results.loading,
+          });
+        });
+      }
+    });
+    
     // update lobby list
     lobbiesSub = client().subscribe({ query: LOBBY_UPDATED_QUERY })
       .subscribe((results) => {
@@ -89,12 +85,12 @@ class Lobby extends Component {
   }
 
   componentWillUnmount() {
+    this.authListener();
     this.unsubscribeToLobby();
     if (lobbiesSub) lobbiesSub.unsubscribe();
   }
 
-  getCurrentLobby = (userID) => {
-    const { lobbyList } = this.state;
+  getCurrentLobby = (userID, lobbyList) => {
     let res = null;
 
     lobbyList.forEach(lobby => {
@@ -195,7 +191,10 @@ class Lobby extends Component {
               currentLobby: results.data.joinLobby,
             });
             this.subscribeToLobby(results.data.joinLobby._id);
-          })
+          }).catch(() => (
+            toast.error(`🚫 Lobby is full` , {
+            position: 'bottom-right',
+          })))
         ));
       } else {
         client().mutate({ mutation: mutation }).then((results) => {
@@ -203,7 +202,10 @@ class Lobby extends Component {
             currentLobby: results.data.joinLobby,
           });
           this.subscribeToLobby(results.data.joinLobby._id);
-        });
+        }).catch(() => (
+          toast.error(`🚫 Lobby is full` , {
+          position: 'bottom-right',
+        })));
       }
     }
   }
@@ -230,7 +232,10 @@ class Lobby extends Component {
             currentLobby: results.data.createLobby,
           });
           this.subscribeToLobby(results.data.createLobby._id);
-        })
+        }).catch(() => (
+          toast.error(`🚫 Could not create lobby` , {
+          position: 'bottom-right',
+        })))
       ));
     } else {
       client().mutate({ mutation: mutation }).then((results) => {
@@ -238,7 +243,10 @@ class Lobby extends Component {
           currentLobby: results.data.createLobby,
         });
         this.subscribeToLobby(results.data.createLobby._id);
-      });
+      }).catch(() => (
+        toast.error(`🚫 Could not create lobby` , {
+        position: 'bottom-right',
+      })));
     }
   }
 
@@ -350,8 +358,13 @@ class Lobby extends Component {
                         ? lobbyList.map(lobby => (
                           <tr key={lobby._id}>
                             <td style={{ cursor: 'pointer' }} onClick={() => this.joinLobby(lobby._id, currentUser.uid)}>
-                              <span style={{ fontWeight: 'bold' }}>{lobby.users[0].username}</span>
-                              &apos;s lobby
+                              <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                                <div>
+                                  <span style={{ fontWeight: 'bold' }}>{lobby.users[0].username}</span>
+                                  &apos;s lobby
+                                </div>
+                                <span>{lobby.users.length}/4</span>
+                              </div>
                             </td>
                           </tr>
                         ))
