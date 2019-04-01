@@ -20,6 +20,7 @@ import {
 import { toast } from 'react-toastify';
 import client from '../common/utils';
 import spritesheet from '../assets/spritesheet.png';
+import Loading from './Loading';
 import Timer from './Timer';
 import './Board.css';
 import {
@@ -520,9 +521,13 @@ class Board extends Component {
       ),
       VORTEX: (
         <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
-          🌀
+          <span role="img" aria-label="vortex">🌀</span>
         </Button>
       ),
+    }
+
+    if (!this.state.gameStateID) {
+      return (<Loading />);
     }
 
     return (

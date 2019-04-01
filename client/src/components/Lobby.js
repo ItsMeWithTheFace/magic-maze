@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Table, Card, CardHeader, CardBody, CardTitle, CardFooter, Badge, Button, Spinner,
+  Table, Card, CardHeader, CardBody, CardTitle, CardFooter, Badge, Button,
 } from 'reactstrap';
 import { faUsers, faDoorOpen } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -11,6 +11,7 @@ import idx from 'idx';
 import gql from 'graphql-tag';
 import client from '../common/utils';
 import './Lobby.css';
+import Loading from './Loading';
 import createGame from '../actions/game';
 import {
   LOBBY_UPDATED_QUERY,
@@ -305,20 +306,7 @@ class Lobby extends Component {
     );
 
     if (loading) {
-      return (
-        <div>
-          <div className="cover">
-            <div className="container" style={{ marginTop: '15em' }}>
-              <header>
-                <h1>LOADING</h1>
-              </header>
-              <div style={{ textAlign: 'center', marginTop: '5em' }}>
-                <Spinner color="success" style={{ width: '15em', height: '15em', fontWeight: 'bold' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      );
+      return (<Loading />);
     }
 
     return (
