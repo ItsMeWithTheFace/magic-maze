@@ -93,17 +93,6 @@ class Lobby extends Component {
     if (lobbiesSub) lobbiesSub.unsubscribe();
   }
 
-  // componentDidUpdate(prevProps, prevState) {
-  //   const currentLobbyID = idx(this.state, _ => _.currentLobby._id);
-  //   const prevLobbyID = idx(prevState, _ => _.currentLobby._id);
-
-  //   if (currentLobbyID && prevLobbyID !== currentLobbyID) {
-  //     const lobbyID = currentLobbyID;
-  //     // update current lobby's user list
-
-  //   }
-  // }
-
   getCurrentLobby = (userID) => {
     const { lobbyList } = this.state;
     let res = null;
@@ -261,8 +250,6 @@ class Lobby extends Component {
     `;
     console.log(mutation);
     client().mutate({ mutation }).then((results) => {
-      // will return the id and then this should probably be save in redux state
-      // then history.push('/board')
       this.props.createGame(results.data.createGameState);
       this.props.history.push('/board');
       const mutation = gql`
