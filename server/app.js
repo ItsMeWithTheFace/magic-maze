@@ -3,9 +3,12 @@ require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
-const { ApolloServer } = require('apollo-server-express');
+const _ = require('lodash');
+const { ApolloServer, AuthenticationError } = require('apollo-server-express');
 const { createServer } = require('http');
+const bodyParser = require('body-parser');
 const logger = require('./common/logger');
+const { firebaseApp } = require('./config/firebase');
 
 const typeDefs = require('./schema');
 const resolvers = require('./resolvers');
@@ -21,16 +24,72 @@ app.use(cors({
   origin: '*',
   optionsSuccessStatus: 200,
 }));
+app.use(bodyParser.json());
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: {
-    models,
+  context: async ({ req }) => {
+    if (!req || !req.headers) {
+      return {}; // websockets
+    }
+
+    let token;
+    if (req && req.headers && req.headers.authorization) {
+      token = req.headers.authorization;
+    } else {
+      throw new AuthenticationError('Authorization token not provided');
+    }
+
+    token = _.replace(token, 'Bearer ', '');
+
+    const decodedToken = await firebaseApp
+      .auth()
+      .verifyIdToken(token);
+
+    // user should be signed up
+    const user = await models.User.findOne({ uid: decodedToken.uid });
+    if (!user) throw new AuthenticationError('User does not exist');
+
+    return {
+      user,
+      models,
+    };
   },
   subscriptions: {
+    keepAlive: true,
     path: '/server/graphql',
+    onConnect: async (connectionParams) => {
+      if (!connectionParams.authToken) throw new AuthenticationError('Missing auth token');
+
+      const decodedToken = await firebaseApp
+        .auth()
+        .verifyIdToken(connectionParams.authToken);
+      // equivalent atomic findOneOrCreate action in mongo
+      const user = await models.User.findOne({ uid: decodedToken.uid });
+
+      return {
+        user: user.value,
+      };
+    },
   },
+});
+
+app.post('/server/adduser/', async (req, res) => {
+  const { uid, username, email } = req.body;
+  if (!uid || !username || !email) return res.status(400).end('Missing required params');
+
+  const insertResult = await models.User.insertOne({
+    uid,
+    username,
+    email,
+  });
+
+  if (insertResult.insertedCount === 1) {
+    return res.status(201).end('Created user');
+  }
+
+  return res.status(400).end('Can\'t insert user');
 });
 
 server.applyMiddleware({ app, path: '/server/graphql' });
