@@ -18,6 +18,7 @@ import {
   ModalBody, ModalFooter,
 } from 'reactstrap';
 import { toast } from 'react-toastify';
+import Cookies from 'universal-cookie';
 import client from '../common/utils';
 import spritesheet from '../assets/spritesheet.png';
 import Loading from './Loading';
@@ -137,110 +138,111 @@ class Board extends Component {
         });
       }
     })
+    const cookies = new Cookies();
+    const gameStateID = cookies.get('gameStateID');
+    this.setState({ gameStateID },
+      () => {
+        const { gameStateID } = this.state;
+        document.getElementById('board').appendChild(app.view);
+        document.body.style.overflow = 'hidden';
+        PIXI.Loader.shared.reset();
+        PIXI.Loader.shared
+          .add(spriteList)
+          .load(this.setup);
+
+        endTimeSub = client().subscribe({ query: ENDTIME_QUERY(gameStateID), variables: { gameStateID } })
+          .subscribe(time => {
+            const rotateActions = rotateList(this.state.actions, 1);
+            this.setState({ gameEndTime: new Date(time.data.endTimeUpdated), actions: rotateActions });
+          });
+
+        // get colour and set character state
+        characterUpdatedSub = client().subscribe({ query: CHARACTER_UPDATED_QUERY(gameStateID), variables: { gameStateID } })
+          .subscribe((results) => {
+            const { characters, selector, currentUser } = this.state;
+
+            const { colour, coordinates, locked, itemClaimed } = results.data.characterUpdated;
+
+            if (results.data.characterUpdated.itemClaimed) {
+              if (!characters[colour].itemClaimed) {
+                toast.success(`👌🏻 ${colour} item claimed`, {
+                  position: 'bottom-right',
+                });
+              }
+            }
+
+            // update character position
+            const characterList = characters;
+            characterList[colour].x = coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
+            characterList[colour].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
+            characterList[colour].itemClaimed = itemClaimed;
+            characterList[colour].locked = locked;
+
+            // update selector position
+            const selectorObjIndex = selector.findIndex((select) => select.colour === colour);
+            selector[selectorObjIndex].x = coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
+            selector[selectorObjIndex].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
+            selector[selectorObjIndex].visible = (locked && selectorObjIndex > -1) ? true : false;
+
+            let selected = '';
+            for (let key in characterList) {
+              if (characterList[key].locked === currentUser.uid) selected = key;
+            }
+            this.setState({
+              selected,
+              characters: characterList,
+              selector,
+            });
+          });
+
+        // set add mazeTile
+        mazeTileUpdatedSub = client().subscribe({ query: MAZETILE_UPDATED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+          .subscribe((results) => {
+            const newTileTexture = new PIXI.Texture(
+              PIXI.utils.TextureCache[require(`../assets/maze/${results.data.mazeTileAdded.spriteID}.png`)],
+              new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
+            );
+            const newTile = new PIXI.Sprite(newTileTexture);
+            // adding a pivot affects the position of the tile
+            // must offset by (WIDTH / 2) * SCALE to counteract this
+            newTile.x = results.data.mazeTileAdded.cornerCoordinates.x * (TILE_SIZE * SCALE) + X_OFFSET + (MAZE_SIZE / 2) * 4;
+            newTile.y = results.data.mazeTileAdded.cornerCoordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET + (MAZE_SIZE / 2) * 4;
+            // add pivot in the centre of the tile
+            newTile.pivot.set(MAZE_SIZE / 2);
+            newTile.scale.set(SCALE, SCALE);
+            newTile.angle = results.data.mazeTileAdded.orientation * (-90);
+            mazeContainer.addChild(newTile);
+          });
+
+        // display message if all items have been claimed
+        itemsClaimedSub = client().subscribe({ query: ITEMS_CLAIMED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+          .subscribe(() => {
+            toast.info('🙌🏻 all items have been claimed! all vortexes disabled! time to escape!', {
+              position: 'bottom-right',
+              autoClose: false,
+            });
+            this.setState({
+              itemsClaimed: true,
+            });
+          });
+
+        // end the game if true
+        endGameSub = client().subscribe({ query: END_GAME_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+          .subscribe(() => {
+            this.setState({
+              doTick: false,
+              gameOver: true,
+            });
+          });
+      }
+    );
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    if ((prevProps.gameStateID !== this.props.gameStateID && this.state.currentUser)
-      || (this.props.gameStateID && prevState.currentUser !== this.state.currentUser)) {
+  // componentDidUpdate(prevProps, prevState) {
+  //   if ((prevProps.gameStateID !== this.props.gameStateID && this.state.currentUser)
+  //     || (this.props.gameStateID && prevState.currentUser !== this.state.currentUser)) {
       
-      this.setState({ gameStateID: this.props.gameStateID },
-        () => {
-          const { gameStateID } = this.state;
-          document.getElementById('board').appendChild(app.view);
-          document.body.style.overflow = 'hidden';
-          PIXI.Loader.shared.reset();
-          PIXI.Loader.shared
-            .add(spriteList)
-            .load(this.setup);
-
-          endTimeSub = client().subscribe({ query: ENDTIME_QUERY(gameStateID), variables: { gameStateID } })
-            .subscribe(time => {
-              const rotateActions = rotateList(this.state.actions, 1);
-              this.setState({ gameEndTime: new Date(time.data.endTimeUpdated), actions: rotateActions });
-            });
-
-          // get colour and set character state
-          characterUpdatedSub = client().subscribe({ query: CHARACTER_UPDATED_QUERY(gameStateID), variables: { gameStateID } })
-            .subscribe((results) => {
-              const { characters, selector, currentUser } = this.state;
-
-              const { colour, coordinates, locked, itemClaimed } = results.data.characterUpdated;
-
-              if (results.data.characterUpdated.itemClaimed) {
-                if (!characters[colour].itemClaimed) {
-                  toast.success(`👌🏻 ${colour} item claimed`, {
-                    position: 'bottom-right',
-                  });
-                }
-              }
-
-              // update character position
-              const characterList = characters;
-              characterList[colour].x = coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
-              characterList[colour].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
-              characterList[colour].itemClaimed = itemClaimed;
-              characterList[colour].locked = locked;
-
-              // update selector position
-              const selectorObjIndex = selector.findIndex((select) => select.colour === colour);
-              selector[selectorObjIndex].x = coordinates.x * TILE_SIZE * SCALE + X_OFFSET;
-              selector[selectorObjIndex].y = coordinates.y * TILE_SIZE * SCALE + Y_OFFSET;
-              selector[selectorObjIndex].visible = (locked && selectorObjIndex > -1) ? true : false;
-
-              let selected = '';
-              for (let key in characterList) {
-                if (characterList[key].locked === currentUser.uid) selected = key;
-              }
-              this.setState({
-                selected,
-                characters: characterList,
-                selector,
-              });
-            });
-
-          // set add mazeTile
-          mazeTileUpdatedSub = client().subscribe({ query: MAZETILE_UPDATED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
-            .subscribe((results) => {
-              const newTileTexture = new PIXI.Texture(
-                PIXI.utils.TextureCache[require(`../assets/maze/${results.data.mazeTileAdded.spriteID}.png`)],
-                new PIXI.Rectangle(0, 0, MAZE_SIZE, MAZE_SIZE),
-              );
-              const newTile = new PIXI.Sprite(newTileTexture);
-              // adding a pivot affects the position of the tile
-              // must offset by (WIDTH / 2) * SCALE to counteract this
-              newTile.x = results.data.mazeTileAdded.cornerCoordinates.x * (TILE_SIZE * SCALE) + X_OFFSET + (MAZE_SIZE / 2) * 4;
-              newTile.y = results.data.mazeTileAdded.cornerCoordinates.y * (TILE_SIZE * SCALE) + Y_OFFSET + (MAZE_SIZE / 2) * 4;
-              // add pivot in the centre of the tile
-              newTile.pivot.set(MAZE_SIZE / 2);
-              newTile.scale.set(SCALE, SCALE);
-              newTile.angle = results.data.mazeTileAdded.orientation * (-90);
-              mazeContainer.addChild(newTile);
-            });
-
-          // display message if all items have been claimed
-          itemsClaimedSub = client().subscribe({ query: ITEMS_CLAIMED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
-            .subscribe(() => {
-              toast.info('🙌🏻 all items have been claimed! all vortexes disabled! time to escape!', {
-                position: 'bottom-right',
-                autoClose: false,
-              });
-              this.setState({
-                itemsClaimed: true,
-              });
-            });
-
-          // end the game if true
-          endGameSub = client().subscribe({ query: END_GAME_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
-            .subscribe(() => {
-              this.setState({
-                doTick: false,
-                gameOver: true,
-              });
-            });
-          }
-        )
-    }
-  }
+  // }
 
   componentWillUnmount() {
     this.authListener();
@@ -492,6 +494,8 @@ class Board extends Component {
     }
     `;
     client().mutate({ mutation });
+    const cookies = new Cookies();
+    cookies.set('gameStateID', null);
     this.props.history.push('/');
   }
 
@@ -507,27 +511,28 @@ class Board extends Component {
 
     const actionMap = {
       UP: (
-        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+        <Button key={'up'} color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
           <FontAwesomeIcon icon="arrow-circle-up" />
         </Button>
       ),
       DOWN: (
-        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+        <Button key={'down'} color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
           <FontAwesomeIcon icon="arrow-circle-down" />
         </Button>
       ),
       LEFT: (
-        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+        <Button key={'left'} color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
           <FontAwesomeIcon icon="arrow-circle-left" />
         </Button>
       ),
       RIGHT: (
-        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+        <Button key={'right'} color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
           <FontAwesomeIcon icon="arrow-circle-right" />
         </Button>
       ),
       SEARCH: (
-        <Button 
+        <Button
+          key={'search'}
           color="primary" 
           className="mr-2 mt-3" 
           type="button" 
@@ -537,23 +542,38 @@ class Board extends Component {
         </Button>
       ),
       ESCALATOR: (
-        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+        <Button key={'escalator'} color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
           <img src={escalatorIcon} className="mb-1" alt="Icon made from Freepik retrieved from FlatIcon licensed by CC 3.0" style={{ maxWidth: '25px', maxHeight: '25px' }} />
         </Button>
       ),
       VORTEX: (
-        <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
+        <Button key={'vortex'} color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
           <img src={vortexIcon} className="mb-1" alt="Icon made from Freepik retrieved from FlatIcon licensed by CC 3.0" style={{ maxWidth: '25px', maxHeight: '25px' }}/>
         </Button>
       ),
     }
+    const loading = (!this.state.gameStateID || !this.state.currentUser) ? (<Loading />) : null;
 
-    if (!this.state.gameStateID) {
-      return (<Loading />);
-    }
-
+    const sideNav = this.state.currentUser !== null ? (
+      this.state.users.map((user, index) => (
+        <div key={user.uid} className={"player " + (this.state.currentUser.uid === user.uid ? 'bg-warning text-dark' : 'bg-info')}>
+          <div className="mt-4" style={{ fontWeight: 'bold' }}>
+            <FontAwesomeIcon icon="user" />
+            &nbsp;{user.username}
+          </div>
+          <div>
+            {
+              this.state.actions[index].map(action => {
+                return actionMap[action]
+              })
+            }
+          </div>
+        </div>
+      ))
+    ) : null;
     return (
       <div>
+        {loading}
         {/* game win modal */}
         <Modal isOpen={gameOver} size="lg">
           <ModalHeader>
@@ -571,21 +591,7 @@ class Board extends Component {
         <Timer endGame={() => this.endGame()} endTime={gameEndTime} doTick={doTick} />
 
         <div className="sidenav">
-          {this.state.users.map((user, index) => (
-            <div key={user.uid} className={"player " + (this.state.currentUser.uid === user.uid ? 'bg-warning text-dark' : 'bg-info')}>
-              <div className="mt-4" style={{ fontWeight: 'bold' }}>
-                <FontAwesomeIcon icon="user" />
-                &nbsp;{user.username}
-              </div>
-              <div>
-                {
-                  this.state.actions[index].map(action => {
-                    return actionMap[action]
-                  })
-                }
-              </div>
-            </div>
-          ))}
+          { sideNav }
         </div>
         { message }
         <div id="board" />

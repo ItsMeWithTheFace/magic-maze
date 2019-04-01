@@ -5,9 +5,7 @@ export function addUser(userInfo) {
     headers: {
       'Content-Type': 'application/json',
     },
-  })
-    .then(res => console.log(res))
-    .catch(err => console.error(err));
+  });
 }
 
 export default addUser;
