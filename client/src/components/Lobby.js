@@ -264,17 +264,17 @@ class Lobby extends Component {
       // then history.push('/board')
       this.props.createGame(results.data.createGameState);
       this.props.history.push('/board');
-      const mutation = gql`
-        mutation {
-          deleteLobby(lobbyID: "${lobbyID}", userID: "${this.state.currentUser.uid}")
-        }
-      `;
-      client().mutate({ mutation: mutation }).then(() => {
-        this.setState({
-          currentLobby: null,
-        });
-        this.unsubscribeToLobby();
-      });
+      // const mutation = gql`
+      //   mutation {
+      //     deleteLobby(lobbyID: "${lobbyID}", userID: "${this.state.currentUser.uid}")
+      //   }
+      // `;
+      // client().mutate({ mutation: mutation }).then(() => {
+      //   this.setState({
+      //     currentLobby: null,
+      //   });
+      //   this.unsubscribeToLobby();
+      // });
     }).catch((err) => console.error(err));
   }
 

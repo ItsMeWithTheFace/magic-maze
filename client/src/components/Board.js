@@ -70,6 +70,10 @@ const spriteList = [
   { url: require('../assets/maze/11.png') },
 ];
 
+// card icons
+const escalatorIcon = require('../assets/escalator.svg');
+const vortexIcon = require('../assets/vortex.svg');
+
 let characterContainer;
 let mazeContainer;
 let artifactContainer;
@@ -535,12 +539,12 @@ class Board extends Component {
       ),
       ESCALATOR: (
         <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
-          E
+          <img src={escalatorIcon} className="mb-1" alt="escalator" style={{ maxWidth: '25px', maxHeight: '25px' }} />
         </Button>
       ),
       VORTEX: (
         <Button color="primary" className="mr-2 mt-3" style={{ fontSize: '1.5em' }}>
-          <span role="img" aria-label="vortex">🌀</span>
+          <img src={vortexIcon} className="mb-1" alt="vortex" style={{ maxWidth: '25px', maxHeight: '25px' }}/>
         </Button>
       ),
     }
