@@ -15,7 +15,7 @@ Web-implementation developed by the team of:
 
 ### URLs
 
-Application: http://www.magicmaze.me
+Application: http://dockhero-triangular-38507.dockhero.io
 
 ### Overview
 
