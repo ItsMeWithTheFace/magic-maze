@@ -23,8 +23,6 @@ Application: http://www.magicmaze.me
 
 The game is made up of four characters who are searching for a unique item associated to their character within the maze. Upon obtaining all of their items, they all must escape the maze by reaching the appropriate exit before time runs out. Each player can control any of the characters but can only make them perform 1 to 2 actions in the maze.
 
-Our frontend stack is comprised of the following technologies:
-
 ## Technology stack
 
 ### Frontend architecture
