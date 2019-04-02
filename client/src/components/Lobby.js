@@ -51,23 +51,24 @@ let lobbiesSub;
 class Lobby extends Component {
   constructor(props) {
     super(props);
+    const cookies = new Cookies();
+    const authToken = cookies.get('authToken');
     this.state = {
       lobbyList: [],
       currentUser: null,
       currentLobby: null,
       loading: true,
+      authToken,
     };
   }
 
   componentDidMount() {
     const { firebase } = this.props;
     console.log(firebase);
-    const cookies = new Cookies();
-    const authToken = cookies.get('authToken');
 
     this.authListener = firebase.auth.onAuthStateChanged((user) => {
       if (user) {
-        client(authToken).query({ query: GET_LOBBIES }).then((results) => {
+        client(this.state.authToken).query({ query: GET_LOBBIES }).then((results) => {
           this.setState({
             currentUser: user,
             currentLobby: this.getCurrentLobby(user.uid, results.data.lobbies),
@@ -80,7 +81,7 @@ class Lobby extends Component {
     });
     
     // update lobby list
-    lobbiesSub = client(authToken).subscribe({ query: LOBBY_UPDATED_QUERY })
+    lobbiesSub = client(this.state.authToken).subscribe({ query: LOBBY_UPDATED_QUERY })
       .subscribe((results) => {
         this.setState({
           lobbyList: results.data.lobbiesUpdated,
@@ -107,14 +108,14 @@ class Lobby extends Component {
   }
 
   subscribeToLobby = (lobbyID) => {
-    lobbySub = client(authToken).subscribe({ query: LOBBY_USERS_UPDATED_QUERY(lobbyID), variables: { lobbyID } })
+    lobbySub = client(this.state.authToken).subscribe({ query: LOBBY_USERS_UPDATED_QUERY(lobbyID), variables: { lobbyID } })
       .subscribe((results) => {
         this.setState({
           currentLobby: results.data.lobbyUsersUpdated,
         });
       });
     // subscription for when gamestate is created
-    gameSub = client(authToken).subscribe({ query: CREATED_GAMESTATE_QUERY(lobbyID), variables: { lobbyID } })
+    gameSub = client(this.state.authToken).subscribe({ query: CREATED_GAMESTATE_QUERY(lobbyID), variables: { lobbyID } })
       .subscribe((results) => {
         this.setGameStateCookie(results.data.createdGameState);
         this.props.history.push('/board');
@@ -136,7 +137,7 @@ class Lobby extends Component {
     `;
 
     if (currentLobby.users[0].uid === currentUser.uid && currentLobby.users.length === 1) {
-      client(authToken).mutate({ mutation: mutation }).then(() => {
+      client(this.state.authToken).mutate({ mutation: mutation }).then(() => {
         this.setState({
           currentLobby: null,
         });
@@ -160,7 +161,7 @@ class Lobby extends Component {
     if (currentLobby.users[0].uid === currentUser.uid) {
       this.deleteLobby(lobbyID, userID);
     } else {
-      client(authToken).mutate({ mutation: mutation }).then(() => {
+      client(this.state.authToken).mutate({ mutation: mutation }).then(() => {
         this.setState({ currentLobby: null });
         this.unsubscribeToLobby();
         if (callback) callback();
@@ -190,7 +191,7 @@ class Lobby extends Component {
     } else {
       if (currentLobbyID) {
         this.leaveLobby(currentLobbyID, currentUser.uid, () => (
-          client(authToken).mutate({ mutation: mutation }).then((results) => {
+          client(this.state.authToken).mutate({ mutation: mutation }).then((results) => {
             this.setState({
               currentLobby: results.data.joinLobby,
             });
@@ -201,7 +202,7 @@ class Lobby extends Component {
           })))
         ));
       } else {
-        client(authToken).mutate({ mutation: mutation }).then((results) => {
+        client(this.state.authToken).mutate({ mutation: mutation }).then((results) => {
           this.setState({
             currentLobby: results.data.joinLobby,
           });
@@ -231,7 +232,7 @@ class Lobby extends Component {
     `;
     if (currentLobbyID) {
       this.leaveLobby(currentLobbyID, currentUser.uid, () => (
-        client(authToken).mutate({ mutation: mutation }).then((results) => {
+        client(this.state.authToken).mutate({ mutation: mutation }).then((results) => {
           this.setState({
             currentLobby: results.data.createLobby,
           });
@@ -242,7 +243,7 @@ class Lobby extends Component {
         })))
       ));
     } else {
-      client(authToken).mutate({ mutation: mutation }).then((results) => {
+      client(this.state.authToken).mutate({ mutation: mutation }).then((results) => {
         this.setState({
           currentLobby: results.data.createLobby,
         });
@@ -273,7 +274,7 @@ class Lobby extends Component {
         createGameState(lobbyID: "${lobbyID}")
       }
     `;
-    client(authToken).mutate({ mutation }).then((results) => {
+    client(this.state.authToken).mutate({ mutation }).then((results) => {
       this.setGameStateCookie(results.data.createGameState);
       this.props.history.push('/board');
       const mutation = gql`
@@ -281,7 +282,7 @@ class Lobby extends Component {
           deleteLobby(lobbyID: "${lobbyID}", userID: "${this.state.currentUser.uid}")
         }
       `;
-      client(authToken).mutate({ mutation: mutation }).then(() => {
+      client(this.state.authToken).mutate({ mutation: mutation }).then(() => {
         this.setState({
           currentLobby: null,
         });
