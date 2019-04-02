@@ -92,7 +92,7 @@ class Lobby extends Component {
   componentWillUnmount() {
     this.authListener();
     this.unsubscribeToLobby();
-    if (lobbiesSub) lobbiesSub.unsubscribe();
+    if (lobbiesSub) { lobbiesSub.unsubscribe(); lobbiesSub = null; }
   }
 
   getCurrentLobby = (userID, lobbyList) => {
@@ -123,8 +123,8 @@ class Lobby extends Component {
   }
 
   unsubscribeToLobby = () => {
-    if (lobbySub) lobbySub.unsubscribe();
-    if (gameSub) gameSub.unsubscribe();
+    if (lobbySub) { lobbySub.unsubscribe(); lobbySub = null; }
+    if (gameSub) { gameSub.unsubscribe(); gameSub = null; }
   }
 
   deleteLobby = (lobbyID, userID) => {

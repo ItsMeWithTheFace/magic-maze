@@ -246,11 +246,11 @@ class Board extends Component {
 
   componentWillUnmount() {
     this.authListener();
-    if (endTimeSub) endTimeSub.unsubscribe();
-    if (characterUpdatedSub) characterUpdatedSub.unsubscribe();
-    if (mazeTileUpdatedSub) mazeTileUpdatedSub.unsubscribe();
-    if (itemsClaimedSub) itemsClaimedSub.unsubscribe();
-    if (endGameSub) endGameSub.unsubscribe();
+    if (endTimeSub) { endTimeSub.unsubscribe(); endTimeSub = null; }
+    if (characterUpdatedSub) { characterUpdatedSub.unsubscribe(); characterUpdatedSub = null; }
+    if (mazeTileUpdatedSub) { mazeTileUpdatedSub.unsubscribe(); mazeTileUpdatedSub = null; }
+    if (itemsClaimedSub) { itemsClaimedSub.unsubscribe(); itemsClaimedSub = null; }
+    if (endGameSub) { endGameSub.unsubscribe(); endGameSub = null; }
   }
 
   /**
