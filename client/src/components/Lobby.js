@@ -80,7 +80,7 @@ class Lobby extends Component {
     });
     
     // update lobby list
-    lobbiesSub = client().subscribe({ query: LOBBY_UPDATED_QUERY })
+    lobbiesSub = client(authToken).subscribe({ query: LOBBY_UPDATED_QUERY })
       .subscribe((results) => {
         this.setState({
           lobbyList: results.data.lobbiesUpdated,
@@ -107,14 +107,14 @@ class Lobby extends Component {
   }
 
   subscribeToLobby = (lobbyID) => {
-    lobbySub = client().subscribe({ query: LOBBY_USERS_UPDATED_QUERY(lobbyID), variables: { lobbyID } })
+    lobbySub = client(authToken).subscribe({ query: LOBBY_USERS_UPDATED_QUERY(lobbyID), variables: { lobbyID } })
       .subscribe((results) => {
         this.setState({
           currentLobby: results.data.lobbyUsersUpdated,
         });
       });
     // subscription for when gamestate is created
-    gameSub = client().subscribe({ query: CREATED_GAMESTATE_QUERY(lobbyID), variables: { lobbyID } })
+    gameSub = client(authToken).subscribe({ query: CREATED_GAMESTATE_QUERY(lobbyID), variables: { lobbyID } })
       .subscribe((results) => {
         this.setGameStateCookie(results.data.createdGameState);
         this.props.history.push('/board');
@@ -136,7 +136,7 @@ class Lobby extends Component {
     `;
 
     if (currentLobby.users[0].uid === currentUser.uid && currentLobby.users.length === 1) {
-      client().mutate({ mutation: mutation }).then(() => {
+      client(authToken).mutate({ mutation: mutation }).then(() => {
         this.setState({
           currentLobby: null,
         });
@@ -160,7 +160,7 @@ class Lobby extends Component {
     if (currentLobby.users[0].uid === currentUser.uid) {
       this.deleteLobby(lobbyID, userID);
     } else {
-      client().mutate({ mutation: mutation }).then(() => {
+      client(authToken).mutate({ mutation: mutation }).then(() => {
         this.setState({ currentLobby: null });
         this.unsubscribeToLobby();
         if (callback) callback();
@@ -190,7 +190,7 @@ class Lobby extends Component {
     } else {
       if (currentLobbyID) {
         this.leaveLobby(currentLobbyID, currentUser.uid, () => (
-          client().mutate({ mutation: mutation }).then((results) => {
+          client(authToken).mutate({ mutation: mutation }).then((results) => {
             this.setState({
               currentLobby: results.data.joinLobby,
             });
@@ -201,7 +201,7 @@ class Lobby extends Component {
           })))
         ));
       } else {
-        client().mutate({ mutation: mutation }).then((results) => {
+        client(authToken).mutate({ mutation: mutation }).then((results) => {
           this.setState({
             currentLobby: results.data.joinLobby,
           });
@@ -231,7 +231,7 @@ class Lobby extends Component {
     `;
     if (currentLobbyID) {
       this.leaveLobby(currentLobbyID, currentUser.uid, () => (
-        client().mutate({ mutation: mutation }).then((results) => {
+        client(authToken).mutate({ mutation: mutation }).then((results) => {
           this.setState({
             currentLobby: results.data.createLobby,
           });
@@ -242,7 +242,7 @@ class Lobby extends Component {
         })))
       ));
     } else {
-      client().mutate({ mutation: mutation }).then((results) => {
+      client(authToken).mutate({ mutation: mutation }).then((results) => {
         this.setState({
           currentLobby: results.data.createLobby,
         });
@@ -273,7 +273,7 @@ class Lobby extends Component {
         createGameState(lobbyID: "${lobbyID}")
       }
     `;
-    client().mutate({ mutation }).then((results) => {
+    client(authToken).mutate({ mutation }).then((results) => {
       this.setGameStateCookie(results.data.createGameState);
       this.props.history.push('/board');
       const mutation = gql`
@@ -281,7 +281,7 @@ class Lobby extends Component {
           deleteLobby(lobbyID: "${lobbyID}", userID: "${this.state.currentUser.uid}")
         }
       `;
-      client().mutate({ mutation: mutation }).then(() => {
+      client(authToken).mutate({ mutation: mutation }).then(() => {
         this.setState({
           currentLobby: null,
         });
