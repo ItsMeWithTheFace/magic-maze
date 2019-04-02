@@ -64,8 +64,6 @@ class Lobby extends Component {
 
   componentDidMount() {
     const { firebase } = this.props;
-    console.log(firebase);
-
     this.authListener = firebase.auth.onAuthStateChanged((user) => {
       if (user) {
         client(this.state.authToken).query({ query: GET_LOBBIES }).then((results) => {
