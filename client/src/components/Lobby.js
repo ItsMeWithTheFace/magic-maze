@@ -75,7 +75,9 @@ class Lobby extends Component {
           });
         });
       }
-    });
+    })
+    this.authListener();
+    ;
     
     // update lobby list
     lobbiesSub = client(this.state.authToken).subscribe({ query: LOBBY_UPDATED_QUERY })
@@ -87,7 +89,7 @@ class Lobby extends Component {
   }
 
   componentWillUnmount() {
-    this.authListener();
+    if (this.authListener) this.authListener = null;
     this.unsubscribeToLobby();
     if (lobbiesSub) { lobbiesSub.unsubscribe(); lobbiesSub = null; }
   }
@@ -273,18 +275,13 @@ class Lobby extends Component {
     `;
     client(this.state.authToken).mutate({ mutation }).then((results) => {
       this.setGameStateCookie(results.data.createGameState);
-      this.props.history.push('/board');
       const mutation = gql`
         mutation {
           deleteLobby(lobbyID: "${lobbyID}", userID: "${this.state.currentUser.uid}")
         }
       `;
-      client(this.state.authToken).mutate({ mutation: mutation }).then(() => {
-        this.setState({
-          currentLobby: null,
-        });
-        this.unsubscribeToLobby();
-      });
+      client(this.state.authToken).mutate({ mutation: mutation });
+      this.props.history.push('/board');
     }).catch((err) => console.error(err));
   }
 
