@@ -11,7 +11,7 @@ import {
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import PropTypes from 'prop-types';
-import { signupUser, loginUser } from '../actions/user';
+import { signupUser } from '../actions/user';
 import { addUser } from '../common/api';
 
 library.add([
@@ -178,14 +178,13 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
   signupUserProp: user => dispatch(signupUser(user)),
-  loginUserProp: user => dispatch(loginUser(user)),
 });
 
 SignUp.propTypes = {
   history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
-  firebase: PropTypes.shape({ auth: PropTypes.func.isRequired }).isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  firebase: PropTypes.object.isRequired,
   signupUserProp: PropTypes.func.isRequired,
-  loginUserProp: PropTypes.func.isRequired,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(SignUp);

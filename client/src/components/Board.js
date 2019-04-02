@@ -88,6 +88,8 @@ let endGameSub;
 class Board extends Component {
   constructor(props) {
     super(props);
+    const cookies = new Cookies();
+    const authToken = cookies.get('authToken');
     this.state = {
       currentUser: null,
       gameStateID: null,
@@ -100,6 +102,7 @@ class Board extends Component {
       gameOver: false,            // whether or not the game is done or not
       users: [],
       actions: [],
+      authToken,
     };
 
     viewport = new Viewport({
@@ -150,14 +153,14 @@ class Board extends Component {
           .add(spriteList)
           .load(this.setup);
 
-        endTimeSub = client().subscribe({ query: ENDTIME_QUERY(gameStateID), variables: { gameStateID } })
+        endTimeSub = client(this.state.authToken).subscribe({ query: ENDTIME_QUERY(gameStateID), variables: { gameStateID } })
           .subscribe(time => {
             const rotateActions = rotateList(this.state.actions, 1);
             this.setState({ gameEndTime: new Date(time.data.endTimeUpdated), actions: rotateActions });
           });
 
         // get colour and set character state
-        characterUpdatedSub = client().subscribe({ query: CHARACTER_UPDATED_QUERY(gameStateID), variables: { gameStateID } })
+        characterUpdatedSub = client(this.state.authToken).subscribe({ query: CHARACTER_UPDATED_QUERY(gameStateID), variables: { gameStateID } })
           .subscribe((results) => {
             const { characters, selector, currentUser } = this.state;
 
@@ -196,7 +199,7 @@ class Board extends Component {
           });
 
         // set add mazeTile
-        mazeTileUpdatedSub = client().subscribe({ query: MAZETILE_UPDATED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+        mazeTileUpdatedSub = client(this.state.authToken).subscribe({ query: MAZETILE_UPDATED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
           .subscribe((results) => {
             const newTileTexture = new PIXI.Texture(
               PIXI.utils.TextureCache[require(`../assets/maze/${results.data.mazeTileAdded.spriteID}.png`)],
@@ -215,7 +218,7 @@ class Board extends Component {
           });
 
         // display message if all items have been claimed
-        itemsClaimedSub = client().subscribe({ query: ITEMS_CLAIMED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+        itemsClaimedSub = client(this.state.authToken).subscribe({ query: ITEMS_CLAIMED_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
           .subscribe(() => {
             toast.info('🙌🏻 all items have been claimed! all vortexes disabled! time to escape!', {
               position: 'bottom-right',
@@ -227,7 +230,7 @@ class Board extends Component {
           });
 
         // end the game if true
-        endGameSub = client().subscribe({ query: END_GAME_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
+        endGameSub = client(this.state.authToken).subscribe({ query: END_GAME_QUERY(gameStateID), variables: { gameStateID: gameStateID } })
           .subscribe(() => {
             this.setState({
               doTick: false,
@@ -290,7 +293,7 @@ class Board extends Component {
         }
       }
     `;
-    client().query({ query }).then((results) => {
+    client(this.state.authToken).query({ query }).then((results) => {
       // render and create characters
       if (!results.data.gameState) {
         const cookies = new Cookies();
@@ -406,7 +409,7 @@ class Board extends Component {
           }
         }
       `;
-      client().mutate({ mutation }).catch((error) => (
+      client(this.state.authToken).mutate({ mutation }).catch((error) => (
         toast.error(`🚫 ${error}` , {
         position: 'bottom-right',
       })));
@@ -454,7 +457,7 @@ class Board extends Component {
           }
         }
       `;
-      client().mutate({ mutation }).catch((error) => (
+      client(this.state.authToken).mutate({ mutation }).catch((error) => (
         toast.error(`🚫 ${error}` , {
         position: 'bottom-right',
       })));
@@ -487,7 +490,7 @@ class Board extends Component {
           }
         }
       `;
-      client().mutate({ mutation }).catch((error) => (
+      client(this.state.authToken).mutate({ mutation }).catch((error) => (
         toast.error(`🚫 ${error}` , {
         position: 'bottom-right',
       })));
@@ -503,7 +506,7 @@ class Board extends Component {
       )
     }
     `;
-    client().mutate({ mutation });
+    client(this.state.authToken).mutate({ mutation });
     const cookies = new Cookies();
     cookies.set('gameStateID', null);
     this.props.history.push('/');

@@ -73,11 +73,10 @@ class Lobby extends Component {
             currentUser: user,
             currentLobby: this.getCurrentLobby(user.uid, results.data.lobbies),
             lobbyList: results.data.lobbies,
-            loading: results.loading,
+            loading: false,
           });
         });
       }
-      console.log(user);
     });
     
     // update lobby list
