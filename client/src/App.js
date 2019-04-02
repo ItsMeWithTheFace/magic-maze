@@ -14,7 +14,6 @@ const App = ({ store }) => (
         <Route exact path="/" component={Homepage} />
         <Route path="/board" component={Board} />
         <Route exact path="/lobby" component={Lobby} />
-        <Route path="/lobby/:lobbyID" component={Lobby} />
         <Route path="/auth" component={SignUpSignIn} />
       </Switch>
     </BrowserRouter>

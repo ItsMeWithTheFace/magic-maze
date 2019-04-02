@@ -16,6 +16,7 @@ class Homepage extends Component {
 
   componentDidMount() {
     const { firebase } = this.props;
+    console.log(firebase);
     this.authListener = firebase.auth.onAuthStateChanged(async (user) => {
       const cookies = new Cookies();
       if (user) {
@@ -28,6 +29,7 @@ class Homepage extends Component {
       } else {
         cookies.set('authToken', null);
       }
+      console.log(user);
     });
   }
 
