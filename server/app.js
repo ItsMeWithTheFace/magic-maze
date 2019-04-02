@@ -36,18 +36,18 @@ const server = new ApolloServer({
 
     let token;
     if (req && req.headers && req.headers.authorization) {
-      console.log('req header auth', req.headers.authorization);
+      logger.info('req header auth', req.headers.authorization);
       token = req.headers.authorization;
     } else {
       throw new AuthenticationError('Authorization token not provided');
     }
     token = _.replace(token, 'Bearer ', '');
-    console.log('Token', token);
+    logger.info('Token', token);
     const decodedToken = await firebaseApp
       .auth()
       .verifyIdToken(token);
 
-    console.log(decodedToken);
+    logger.info(decodedToken);
 
     // user should be signed up
     const user = await models.User.findOne({ uid: decodedToken.uid });
@@ -62,16 +62,16 @@ const server = new ApolloServer({
     keepAlive: true,
     path: '/server/graphql',
     onConnect: async (connectionParams) => {
-      console.log('connection param', connectionParams.authToken);
+      logger.info('connection param', connectionParams.authToken);
       if (!connectionParams.authToken) throw new AuthenticationError('Missing auth token');
       const decodedToken = await firebaseApp
         .auth()
         .verifyIdToken(connectionParams.authToken);
-      console.log('decodedToeken', decodedToken);
+      logger.info('decodedToeken', decodedToken);
 
       // equivalent atomic findOneOrCreate action in mongo
       const user = await models.User.findOne({ uid: decodedToken.uid });
-      console.log('user', user);
+      logger.info('user', user);
       return {
         user: user.value,
       };

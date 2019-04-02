@@ -64,8 +64,6 @@ class Lobby extends Component {
 
   componentDidMount() {
     const { firebase } = this.props;
-    console.log(firebase);
-
     this.authListener = firebase.auth.onAuthStateChanged((user) => {
       if (user) {
         client(this.state.authToken).query({ query: GET_LOBBIES }).then((results) => {
@@ -73,11 +71,10 @@ class Lobby extends Component {
             currentUser: user,
             currentLobby: this.getCurrentLobby(user.uid, results.data.lobbies),
             lobbyList: results.data.lobbies,
-            loading: results.loading,
+            loading: false,
           });
         });
       }
-      console.log(user);
     });
     
     // update lobby list
