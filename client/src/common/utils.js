@@ -8,7 +8,7 @@ import { InMemoryCache } from 'apollo-cache-inmemory';
 
 const httpLink = token => (
   new HttpLink({
-    uri: `http://${document.location.hostname}:8000/server/graphql`,
+    uri: `https://${document.location.hostname}:8443/server/graphql`,
     headers: {
       authorization: token,
     },
@@ -17,7 +17,7 @@ const httpLink = token => (
 
 const wsLink = token => (
   new WebSocketLink({
-    uri: `ws://${document.location.hostname}:8000/server/graphql`,
+    uri: `wss://${document.location.hostname}:8443/server/graphql`,
     options: {
       reconnect: true,
       connectionParams: {
