@@ -1,11 +1,13 @@
 require('dotenv').config();
 
+const fs = require('fs');
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const _ = require('lodash');
 const { ApolloServer, AuthenticationError } = require('apollo-server-express');
-const { createServer } = require('http');
+const http = require('http');
+const https = require('https');
 const bodyParser = require('body-parser');
 const logger = require('./common/logger');
 const { firebaseApp } = require('./config/firebase');
@@ -17,7 +19,15 @@ const models = require('./models');
 const PORT = process.env.PORT || 8000;
 
 const app = express();
-const ws = createServer(app);
+// const ws = http.createServer(app);
+
+const ws = https.createServer(
+  {
+    cert: fs.readFileSync('./keys/server.crt'),
+    key: fs.readFileSync('./keys/server.key'),
+  },
+  app,
+);
 
 app.use(morgan('combined', { stream: { write: (message) => { logger.info(message); } } }));
 app.use(cors({
